@@ -28,9 +28,9 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.7" % "runtime",
   "org.flywaydb" % "flyway-core" % "11.11.1",
   "org.flywaydb" % "flyway-database-postgresql" % "11.11.1" % "runtime",
-  "com.netra" % "commons-netra" % "0.0.1-a"
-
-
+  "com.netra" % "commons-netra" % "0.0.1-a"  exclude("org.springframework.boot", "spring-boot-starter-validation")
+ // "jakarta.validation" % "jakarta.validation-api" % "3.1.1",           // ✅ API in javax namespace
+  //"org.hibernate.validator" % "hibernate-validator" % "9.0.1.Final" // ✅ Implementation compatible with javax
 )
 
 
