@@ -1,0 +1,154 @@
+@import scalas.utils.StaticAssets
+@(title: String, styles: Html = Html(""), scripts: Html = Html(""), request: Http.Request)(content: Html)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>@title - Themistra</title>
+
+        <link href="@StaticAssets.getUrl("css/bootstrap.min.css")" rel="stylesheet">
+        <link href="@StaticAssets.getUrl("font-awesome/css/all.css")" rel="stylesheet">
+        <link href="@StaticAssets.getUrl("font-awesome/css/fontawesome.css")" rel="stylesheet">
+        <link href="@StaticAssets.getUrl("css/admin/style.css")" rel="stylesheet">
+        <link href="@StaticAssets.getUrl("/css/admin/custom.css")" rel="stylesheet">
+
+        <link rel="shortcut icon" type="image/png" href="@StaticAssets.getUrl("/imgs/favicon.png")">
+
+
+        @styles
+    </head>
+    <body class="d-flex">
+
+            <!-- Sidebar -->
+        <nav id="sidebarMenu" class="d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <div class="text-center mb-3">
+                    <img src="@StaticAssets.getUrl("imgs/logo.png")" class="img-fluid" alt="logo" height="150" width="60"/>
+                    <div class="fw-bold mt-2">
+                        Themistra
+                        <small>code that moves trust</small> <!-- code moving trust -->
+                    </div>
+                </div>
+
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fa fa-dashboard me-2"></i>Dashboard
+                        </a>
+                    </li>
+                        <!-- Example with collapse -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex justify-content-between align-items-center"
+                        data-bs-toggle="collapse" href="#institutionMenus" role="button">
+                            <span><i class="fas fa-university me-2"></i>Institutions</span>
+                            <i class="fa fa-chevron-down small"></i>
+                        </a>
+                        <div class="collapse ps-3" id="institutionMenus">
+                            <ul class="nav flex-column">
+                                <li><a class="nav-link" href="#">Financials</a></li>
+                                <li><a class="nav-link" href="#">Switches</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fa fa-users me-2"></i> Users
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+            <!-- Main Content -->
+        <div class="flex-grow-1">
+                <!-- Top Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
+                <div class="container-fluid">
+                    <button class="btn btn-primary d-md-none" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#sidebarMenu">
+                        <i class="fa fa-bars"></i> MENU
+                    </button>
+
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link">
+                                <i class="fa fa-sign-out"></i> Log out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+                <!-- Page Header -->
+            <header class="bg-light p-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="h4 mb-0">@title</h2>
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    </ol>
+                </div>
+            </header>
+
+                <!-- Page Body -->
+            <main class="container-fluid py-3">
+                <div class="row">
+                @content
+                </div>
+            </main>
+        </div>
+
+            <!-- AJAX Wait Overlay -->
+        <div id="ajaxWait" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="background-color: rgba(15,15,15,0.5); z-index: 1050;">
+            <div class="d-flex justify-content-center align-items-center h-100">
+                <i class="fa fa-spinner fa-spin fa-5x text-white"></i>
+            </div>
+        </div>
+
+        <script>
+                document.addEventListener('DOMContentLoaded', function () {
+
+                    // Helper to show spinner
+                    const showSpinner = () => document.getElementById('ajaxWait').classList.remove('d-none');
+                    const hideSpinner = () => document.getElementById('ajaxWait').classList.add('d-none');
+
+                    // Confirm handler for all .confirm and .confirm2 buttons/links
+                    document.querySelectorAll('.confirm, .confirm2').forEach(btn => {
+                        btn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            if (confirm("Are You sure?")) {
+                                showSpinner();
+                                fetch(this.href, { method: 'POST' })
+                                        .finally(() => {
+                                            setTimeout(() => location.reload(), 2000);
+                                        });
+                            }
+                        });
+                    });
+
+                    // Optional: Toastr replacement using Bootstrap 5 Toasts
+                    const flashSuccess = '@request.flash().get("success")';
+                    if (flashSuccess) {
+                        const toastContainer = document.createElement('div');
+                        toastContainer.className = 'position-fixed top-0 end-0 p-3';
+                        toastContainer.innerHTML = `
+                                       <div class="toast align-items-center text-bg-success border-0 show" role="alert">
+                                            <div class="d-flex">
+                                                <div class="toast-body">${flashSuccess}</div>
+                                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                                            </div>
+                                       </div>
+                         `;
+                        document.body.appendChild(toastContainer);
+                        setTimeout(() => toastContainer.remove(), 4000);
+                    }
+
+                });
+        </script>
+
+
+        <script src="@StaticAssets.getUrl("js/bootstrap.bundle.min.js")"></script>
+        @scripts
+    </body>
+</html>

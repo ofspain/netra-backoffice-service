@@ -1,0 +1,451 @@
+
+@import com.netra.commons.models.FinancialInstitution
+@import com.netra.commons.models.EndpointConfig.AuthType
+@import com.netra.commons.models.EndpointConfig.HTTPMethod
+
+@(fi: FinancialInstitution)(implicit req: play.mvc.Http.Request)
+
+@isEdit = @{
+    null != fi.getId()
+}
+
+@action = @{
+    if(isEdit){
+        routes.FilesController.s3Signed("ll")
+    }else{
+        routes.FilesController.s3Signed("kk")
+    }
+}
+
+@views.html.admin.layout("Financial Institution Form", Html(""), scripts, req) {
+
+
+<div class="col-12">
+        <!-- Stepper -->
+    <div class="stepper mb-4">
+        <ul class="nav nav-pills justify-content-center" id="fiStepper" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="step1-tab" data-bs-toggle="pill" data-bs-target="#step1" type="button" role="tab">
+                    <span class="step-index">1</span> General
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="step2-tab" data-bs-toggle="pill" data-bs-target="#step2" type="button" role="tab">
+                    <span class="step-index">2</span> Endpoint Basics
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="step3-tab" data-bs-toggle="pill" data-bs-target="#step3" type="button" role="tab">
+                    <span class="step-index">3</span> Advanced
+                </button>
+            </li>
+        </ul>
+        <div class="progress mt-3" style="height: 6px;">
+            <div id="fiStepperProgress" class="progress-bar" role="progressbar" style="width:33%;"></div>
+        </div>
+    </div>
+
+    <form id="fiForm" action="@action" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        @* If you’re using Play CSRF, uncomment:
+        @helper.CSRF.formField
+        *@
+        @if(isEdit) {
+            <input type="hidden" name="id" value="@fi.getId()">
+        }
+
+        <div class="tab-content" id="fiStepperContent">
+                <!-- STEP 1: General -->
+            <div class="tab-pane fade show active" id="step1" role="tabpanel" aria-labelledby="step1-tab">
+                <div class="card mb-3">
+                    <div class="card-header">General Information</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Name</label>
+                                <input name="name" type="text" class="form-control" required value="@Option(fi).map(_.getName()).getOrElse("")">
+                                <div class="invalid-feedback">Name is required.</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Code</label>
+                                <input name="code" type="text" class="form-control" required value="@Option(fi).map(_.getCode()).getOrElse("")">
+                                <div class="invalid-feedback">Code is required.</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Domain Code</label>
+                                <input name="domainCode" type="text" class="form-control" required value="@Option(fi).map(_.getDomainCode()).getOrElse("")">
+                                <div class="invalid-feedback">Domain code is required.</div>
+                            </div>
+
+                            <div class="col-md-3 d-flex align-items-end">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="disabled" id="disabledSwitch" @if(Option(fi).exists(_.getDisabled() == java.lang.Boolean.TRUE)){checked}>
+                                    <label class="form-check-label" for="disabledSwitch">Disabled</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Logo (upload)</label>
+                                <input class="form-control" type="file" name="logoFile" accept="image/*">
+                                @if(isEdit) {
+                                    <input type="hidden" name="existingLogoKey" value="@Option(fi).map(_.getLogoKey()).getOrElse("")">
+                                }
+                                <div class="form-text">We’ll store the S3 key as <code>logo_key</code>.</div>
+                            </div>
+
+                            @*todo: logo src: @Option(fi).map(_.getLogoKey()).map(k => routes.FilesController.s3Signed(k).url()).getOrElse("") *@
+
+                            <div class="col-md-3 text-center">
+                                <img id="logoPreview"
+                                src=""
+                                class="img-fluid logo-img border rounded @if(Option(fi).forall(_.getLogoKey() == null)){"d-none"}"
+                                alt="logo preview">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary" disabled>Back</button>
+                    <button type="button" class="btn btn-primary" data-next="#step2-tab">Next</button>
+                </div>
+            </div>
+
+                <!-- STEP 2: Endpoint Basics -->
+            <div class="tab-pane fade" id="step2" role="tabpanel" aria-labelledby="step2-tab">
+                <div class="card mb-3">
+                    <div class="card-header">Endpoint Config – Basics</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Description</label>
+                                <input name="endpointConfig.description" type="text" class="form-control" value="">
+                            </div>
+
+                            <div class="col-md-8">
+                                <label class="form-label">Base URL</label>
+                                <input name="endpointConfig.baseUrl" type="url" class="form-control" placeholder="https://api.example.com" required>
+                                <div class="invalid-feedback">Valid Base URL is required.</div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Timeout (ms)</label>
+                                <input name="endpointConfig.timeoutMillis" type="number" min="100" step="100" value="5000" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-4 d-flex align-items-end">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="requiresAuthSwitch" name="endpointConfig.requiresAuth">
+                                    <label class="form-check-label" for="requiresAuthSwitch">Requires Auth</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 auth-type d-none">
+                                <label class="form-label">Auth Type</label>
+                                <select class="form-select" name="endpointConfig.authType">
+                                @for(a <- AuthType.values()) {
+                                    <option value="@a">@a</option>
+                                }
+                                </select>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Request Body Template (JSON or text)</label>
+                                <textarea name="endpointConfig.requestBodyTemplate" class="form-control" rows="4" placeholder="{ }"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" data-prev="#step1-tab">Back</button>
+                    <button type="button" class="btn btn-primary" data-next="#step3-tab">Next</button>
+                </div>
+            </div>
+
+                <!-- STEP 3: Advanced -->
+            <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
+                <div class="card mb-3">
+                    <div class="card-header">Endpoints</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                                <!-- Unique Transaction -->
+                            <div class="col-12">
+                                <h6 class="mb-2">Unique Transaction</h6>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">URL</label>
+                                <input name="endpointConfig.uniqueTransaction.url" type="text" class="form-control" placeholder="/v1/tx/{id}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Method</label>
+                                <select class="form-select" name="endpointConfig.uniqueTransaction.method">
+                                @for(m <- HTTPMethod.values()) {
+                                    <option value="@m">@m</option>
+                                }
+                                </select>
+                            </div>
+
+                                <!-- Headers (Unique) -->
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label mb-0">Headers</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary add-header" data-target="#uniqueHeaders">Add Header</button>
+                                </div>
+                                <div id="uniqueHeaders" class="row g-2 mt-1 header-list">
+                                    <div class="col-md-4">
+                                        <input name="endpointConfig.uniqueTransaction.headers[0].name" class="form-control" placeholder="Name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input name="endpointConfig.uniqueTransaction.headers[0].value" class="form-control" placeholder="Value">
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-center">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="endpointConfig.uniqueTransaction.headers[0].dynamic" id="uh0">
+                                            <label class="form-check-label small" for="uh0">Dynamic</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr class="my-3">
+
+                                <!-- Multiple Transaction -->
+                            <div class="col-12">
+                                <h6 class="mb-2">Multiple Transaction</h6>
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label">URL</label>
+                                <input name="endpointConfig.multipleTransaction.url" type="text" class="form-control" placeholder="/v1/tx/bulk">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Method</label>
+                                <select class="form-select" name="endpointConfig.multipleTransaction.method">
+                                @for(m <- HTTPMethod.values()) { <option value="@m">@m</option> }
+                                </select>
+                            </div>
+
+                                <!-- Headers (Multiple) -->
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label mb-0">Headers</label>
+                                    <button type="button" class="btn btn-sm btn-outline-primary add-header" data-target="#multipleHeaders">Add Header</button>
+                                </div>
+                                <div id="multipleHeaders" class="row g-2 mt-1 header-list">
+                                    <div class="col-md-4">
+                                        <input name="endpointConfig.multipleTransaction.headers[0].name" class="form-control" placeholder="Name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input name="endpointConfig.multipleTransaction.headers[0].value" class="form-control" placeholder="Value">
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-center">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="endpointConfig.multipleTransaction.headers[0].dynamic" id="mh0">
+                                            <label class="form-check-label small" for="mh0">Dynamic</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div> <!-- /row -->
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header">Connectivity & Resilience</div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                                <!-- Proxy -->
+                            <div class="col-md-3 d-flex align-items-end">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="useProxySwitch" name="endpointConfig.useProxy">
+                                    <label class="form-check-label" for="useProxySwitch">Use Proxy</label>
+                                </div>
+                            </div>
+                            <div class="col-12 proxy-fields d-none">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Proxy Host</label>
+                                        <input name="endpointConfig.proxy.host" type="text" class="form-control">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Port</label>
+                                        <input name="endpointConfig.proxy.port" type="number" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Username</label>
+                                        <input name="endpointConfig.proxy.username" type="text" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Password</label>
+                                        <input name="endpointConfig.proxy.password" type="password" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Type</label>
+                                        <select name="endpointConfig.proxy.type" class="form-select">
+                                            <option value="HTTP">HTTP</option>
+                                            <option value="SOCKS">SOCKS</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                                <!-- Retry -->
+                            <div class="col-12">
+                                <h6 class="mb-2">Retry Config</h6>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Max Attempts</label>
+                                <input name="endpointConfig.retryConfig.maxAttempts" type="number" value="3" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Initial Delay (ms)</label>
+                                <input name="endpointConfig.retryConfig.initialDelayMillis" type="number" value="200" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Multiplier</label>
+                                <input name="endpointConfig.retryConfig.multiplier" type="number" step="0.1" value="2.0" class="form-control">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Max Delay (ms)</label>
+                                <input name="endpointConfig.retryConfig.maxDelayMillis" type="number" value="2000" class="form-control">
+                            </div>
+
+                                <!-- Fallback -->
+                            <div class="col-12">
+                                <h6 class="mb-2">Fallback Config</h6>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Type</label>
+                                <select name="endpointConfig.fallbackConfig.type" class="form-select" id="fallbackTypeSelect">
+                                    <option value="">None</option>
+                                    <option value="STATIC_RESPONSE">STATIC_RESPONSE</option>
+                                    <option value="REDIRECT_ENDPOINT">REDIRECT_ENDPOINT</option>
+                                    <option value="EXCEPTION">EXCEPTION</option>
+                                </select>
+                            </div>
+                            <div class="col-12 fallback-value d-none">
+                                <label class="form-label">Value (JSON map)</label>
+                                <textarea name="endpointConfig.fallbackConfig.value" class="form-control" rows="3" placeholder='{"code":"FALLBACK","message":"..."}'></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" data-prev="#step2-tab">Back</button>
+                    <button type="submit" class="btn btn-success">@if(isEdit) {Update} else {Create}</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+}
+
+ @scripts = {   <!-- Wizard JS (vanilla) -->
+    <script>
+        (function(){
+            const progress = document.getElementById('fiStepperProgress');
+            const tabs = ['step1-tab','step2-tab','step3-tab'].map(id => document.getElementById(id));
+
+            function syncProgress() {
+                const activeIndex = tabs.findIndex(t => t.classList.contains('active'));
+                const pct = (activeIndex+1) / tabs.length * 100;
+                progress.style.width = pct + '%';
+            }
+            tabs.forEach(t => t.addEventListener('shown.bs.tab', syncProgress));
+            syncProgress();
+
+            // Next/Prev buttons
+            document.querySelectorAll('[data-next]').forEach(btn => {
+                btn.addEventListener('click', () => document.querySelector(btn.dataset.next).click());
+            });
+            document.querySelectorAll('[data-prev]').forEach(btn => {
+                btn.addEventListener('click', () => document.querySelector(btn.dataset.prev).click());
+            });
+
+            // Requires Auth toggle
+            const reqAuth = document.getElementById('requiresAuthSwitch');
+            const authType = document.querySelector('.auth-type');
+            if (reqAuth) {
+                const toggleAuth = () => authType.classList.toggle('d-none', !reqAuth.checked);
+                reqAuth.addEventListener('change', toggleAuth);
+                toggleAuth();
+            }
+
+            // Use Proxy toggle
+            const useProxy = document.getElementById('useProxySwitch');
+            const proxyFields = document.querySelector('.proxy-fields');
+            if (useProxy) {
+                const toggleProxy = () => proxyFields.classList.toggle('d-none', !useProxy.checked);
+                useProxy.addEventListener('change', toggleProxy);
+                toggleProxy();
+            }
+
+            // Fallback value visibility
+            const fallbackSelect = document.getElementById('fallbackTypeSelect');
+            const fallbackValue = document.querySelector('.fallback-value');
+            if (fallbackSelect) {
+                const toggleFallback = () => fallbackValue.classList.toggle('d-none', !fallbackSelect.value);
+                fallbackSelect.addEventListener('change', toggleFallback);
+                toggleFallback();
+            }
+
+            // Add header rows
+            function wireAddHeader(btn) {
+                btn.addEventListener('click', () => {
+                    const targetSel = btn.getAttribute('data-target');
+                    const list = document.querySelector(targetSel);
+                    const count = list.querySelectorAll('.col-md-4 input[name$=".name"]').length;
+                    const prefix = targetSel === '#uniqueHeaders'
+                            ? 'endpointConfig.uniqueTransaction.headers'
+                            : 'endpointConfig.multipleTransaction.headers';
+                    const row = document.createElement('div');
+                    row.className = 'row g-2 mt-1';
+                    row.innerHTML = `
+        <div class="col-md-4">
+          <input name="${prefix}[${count}].name" class="form-control" placeholder="Name">
+        </div>
+        <div class="col-md-6">
+          <input name="${prefix}[${count}].value" class="form-control" placeholder="Value">
+        </div>
+        <div class="col-md-2 d-flex align-items-center">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="${prefix}[${count}].dynamic" id="${prefix==='endpointConfig.uniqueTransaction.headers'?'uh':'mh'}${count}">
+            <label class="form-check-label small" for="${prefix==='endpointConfig.uniqueTransaction.headers'?'uh':'mh'}${count}">Dynamic</label>
+          </div>
+        </div>`;
+                    list.appendChild(row);
+                });
+            }
+            document.querySelectorAll('.add-header').forEach(wireAddHeader);
+
+            // Logo preview
+            const logoInput = document.querySelector('input[name="logoFile"]');
+            const logoPreview = document.getElementById('logoPreview');
+            if (logoInput && logoPreview) {
+                logoInput.addEventListener('change', (e) => {
+                    const file = e.target.files && e.target.files[0];
+                    if (!file) return;
+                    const url = URL.createObjectURL(file);
+                    logoPreview.src = url;
+                    logoPreview.classList.remove('d-none');
+                });
+            }
+
+            // Browser-side required validation
+            const form = document.getElementById('fiForm');
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault(); event.stopPropagation();
+                    // jump to first invalid step
+                    const firstInvalid = form.querySelector(':invalid');
+                    if (firstInvalid) {
+                        const pane = firstInvalid.closest('.tab-pane');
+                        if (pane && pane.id) document.querySelector(`[data-bs-target="#${pane.id}"]`).click();
+                        firstInvalid.focus();
+                    }
+                }
+                form.classList.add('was-validated');
+            }, false);
+        })();
+</script>
+ }
+

@@ -1,5 +1,5 @@
-@()
+@(request: Http.Request)
 
-@main("Welcome to Play") {
-  <h1>Welcome to Themistra!, we move trust at the speed of code</h1>
+@admin.layout("Welcome Back Femi", request = request) {
+  <h1>Themistra, code that moves trust</h1>
 }
