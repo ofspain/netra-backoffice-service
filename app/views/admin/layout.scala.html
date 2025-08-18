@@ -1,4 +1,5 @@
 @import scalas.utils.StaticAssets
+@import controllers.admin.routes
 @(title: String, styles: Html = Html(""), scripts: Html = Html(""), request: Http.Request)(content: Html)
 
 <!DOCTYPE html>
@@ -47,7 +48,7 @@
                         </a>
                         <div class="collapse ps-3" id="institutionMenus">
                             <ul class="nav flex-column">
-                                <li><a class="nav-link" href="#">Financials</a></li>
+                                <li><a class="nav-link" href="@routes.FinancialInstitutionController.index(1)">Financials</a></li>
                                 <li><a class="nav-link" href="#">Switches</a></li>
                             </ul>
                         </div>

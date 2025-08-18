@@ -8,4 +8,8 @@ public class FilesController  extends Controller {
     public Result s3Signed(String key){
         return ok("success");
     }
+
+    public Result s3Thumb(String key){
+        return ok("success");
+    }
 }
