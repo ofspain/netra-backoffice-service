@@ -1,5 +1,6 @@
 @import scalas.utils.StaticAssets
 @import controllers.admin.routes
+@import controllers.routes.AuthController
 @(title: String, styles: Html = Html(""), scripts: Html = Html(""), request: Http.Request)(content: Html)
 
 <!DOCTYPE html>
@@ -74,7 +75,7 @@
 
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a href="#" class="nav-link">
+                            <a href="@AuthController.logout()" class="nav-link">
                                 <i class="fa fa-sign-out"></i> Log out
                             </a>
                         </li>
@@ -147,8 +148,6 @@
 
                 });
         </script>
-
-
         <script src="@StaticAssets.getUrl("js/bootstrap.bundle.min.js")"></script>
         @scripts
     </body>

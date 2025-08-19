@@ -3,7 +3,11 @@
 @import com.netra.commons.models.EndpointConfig.AuthType
 @import com.netra.commons.models.EndpointConfig.HTTPMethod
 
-@(fi: FinancialInstitution)(implicit req: play.mvc.Http.Request)
+@import controllers.admin.routes
+@import controllers.routes.FilesController
+
+@import controllers.admin.FinancialInstitutionController
+@(fiForm: Form[FinancialInstitution], fi: FinancialInstitution)(implicit req: play.mvc.Http.Request)
 
 @isEdit = @{
     null != fi.getId()
@@ -11,9 +15,9 @@
 
 @action = @{
     if(isEdit){
-        routes.FilesController.s3Signed("ll")
+        routes.FinancialInstitutionController.updateOldFinInst(fi.getId)
     }else{
-        routes.FilesController.s3Signed("kk")
+        routes.FinancialInstitutionController.saveNewFinInst()
     }
 }
 
@@ -46,9 +50,7 @@
     </div>
 
     <form id="fiForm" action="@action" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-        @* If you’re using Play CSRF, uncomment:
-        @helper.CSRF.formField
-        *@
+
         @if(isEdit) {
             <input type="hidden" name="id" value="@fi.getId()">
         }

@@ -101,3 +101,61 @@
 /* Logo size caps (from earlier) */
 .logo-img { max-width: 180px; max-height: 60px; height: auto; width: auto; }
 
+/* Login Card Styling */
+.login-card {
+    max-width: 400px;
+    margin: 60px auto;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    background-color: #fff;
+}
+
+/* Brand header text inside card */
+.login-card h4 {
+    font-weight: 600;
+    color: #003366; /* Bootstrap blue base */
+    margin-bottom: 1rem;
+}
+
+/* Input fields */
+.login-card .form-control {
+    border-radius: 8px;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    transition: border-color 0.2s;
+}
+.login-card .form-control:focus {
+    border-color: #28a745; /* green accent */
+    box-shadow: 0 0 0 0.2rem rgba(40,167,69,0.15);
+}
+
+/* Buttons */
+.btn-themistra {
+    background-color: #28a745;  /* green accent */
+    border-color: #28a745;
+    color: #fff;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.6rem 1.2rem;
+    transition: background-color 0.3s;
+}
+.btn-themistra:hover {
+    background-color: #218838; /* darker green */
+    border-color: #218838;
+}
+
+/* Footer links */
+.login-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+.login-footer a {
+    color: #003366; /* bootstrap blue */
+    text-decoration: none;
+    font-weight: 500;
+}
+.login-footer a:hover {
+    text-decoration: underline;
+}
+

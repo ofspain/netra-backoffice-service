@@ -1,6 +1,7 @@
 package services.db;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -17,14 +18,16 @@ import java.util.stream.Collectors;
 
 import com.netra.commons.exceptions.AppDataAccessException;
 import play.db.Database;
+import scalas.services.FlywayInitializer;
 
+@Singleton
 public class JdbcWrapper {
 
     private static final Logger LOGGER = Logger.getLogger(JdbcWrapper.class.getName());
     private final Database db;
 
     @Inject
-    public JdbcWrapper(Database db) {
+    public JdbcWrapper(Database db, FlywayInitializer flywayInitializer) {
         this.db = db;
     }
 

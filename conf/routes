@@ -3,7 +3,7 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET     /                           controllers.HomeController.index(request: Request)
+GET     /auth/logout                controllers.AuthController.logout(request: Request)
 
 GET     /files-signed              controllers.FilesController.s3Signed(key: String)
 GET     /files-s3-thumbnail        controllers.FilesController.s3Thumb(key: String)
@@ -16,6 +16,7 @@ GET     /delete-fin-inst           controllers.admin.FinancialInstitutionControl
 
 
 POST     /save-new-fin-inst       controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
+POST     /update-old-fin-inst     controllers.admin.FinancialInstitutionController.updateOldFinInst(id: Long, request: Request)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
