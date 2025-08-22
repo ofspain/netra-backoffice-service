@@ -6,7 +6,8 @@
 @import controllers.admin.routes
 @import controllers.routes.FilesController
 
-@import controllers.admin.FinancialInstitutionController
+@import views.html.utils
+
 @(fiForm: Form[FinancialInstitution], fi: FinancialInstitution)(implicit req: play.mvc.Http.Request)
 
 @isEdit = @{
@@ -50,6 +51,7 @@
     </div>
 
     <form id="fiForm" action="@action" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <input type="hidden" name="csrfToken" value="@UtilityController.csrfToken(req)"/>
 
         @if(isEdit) {
             <input type="hidden" name="id" value="@fi.getId()">
@@ -62,21 +64,18 @@
                     <div class="card-header">General Information</div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Name</label>
-                                <input name="name" type="text" class="form-control" required value="@Option(fi).map(_.getName()).getOrElse("")">
-                                <div class="invalid-feedback">Name is required.</div>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Code</label>
-                                <input name="code" type="text" class="form-control" required value="@Option(fi).map(_.getCode()).getOrElse("")">
-                                <div class="invalid-feedback">Code is required.</div>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Domain Code</label>
-                                <input name="domainCode" type="text" class="form-control" required value="@Option(fi).map(_.getDomainCode()).getOrElse("")">
-                                <div class="invalid-feedback">Domain code is required.</div>
-                            </div>
+                            @utils.field_text(fiForm("name"), "Name", colSPan="12",required = true, htmlValidationMessage = "Name is required.", helpText = scala.Some("The common name this institution is known by"))
+
+                            @utils.field_text(fiForm("code"), "Code", required = true, htmlValidationMessage = "Code is required.",  helpText = scala.Some("A unique code for this institution as used in their respective emails"))
+
+@*                            <div class="col-md-3">*@
+@*                                <label class="form-label">Domain Code</label>*@
+@*                                <input name="domainCode" type="text" class="form-control" required value="@Option(fi).map(_.getDomainCode()).getOrElse("")">*@
+@*                                <div class="invalid-feedback">Domain code is required.</div>*@
+@*                            </div>*@
+
+                            @utils.field_text(fiForm("domainCode"), "Domain Code", attributes = scala.collection.immutable.Map("placeholder"->"Enter the code for this institution, if different from the code"), helpText = scala.Some("A code for this institution, defaults to code used in emails"))
+
 
                             <div class="col-md-3 d-flex align-items-end">
                                 <div class="form-check form-switch">
@@ -84,7 +83,7 @@
                                     <label class="form-check-label" for="disabledSwitch">Disabled</label>
                                 </div>
                             </div>
-
+@*
                             <div class="col-md-6">
                                 <label class="form-label">Logo (upload)</label>
                                 <input class="form-control" type="file" name="logoFile" accept="image/*">
@@ -94,14 +93,21 @@
                                 <div class="form-text">We’ll store the S3 key as <code>logo_key</code>.</div>
                             </div>
 
-                            @*todo: logo src: @Option(fi).map(_.getLogoKey()).map(k => routes.FilesController.s3Signed(k).url()).getOrElse("") *@
-
                             <div class="col-md-3 text-center">
                                 <img id="logoPreview"
                                 src=""
                                 class="img-fluid logo-img border rounded @if(Option(fi).forall(_.getLogoKey() == null)){"d-none"}"
                                 alt="logo preview">
                             </div>
+*@
+
+                            @utils.base64_converter_uploader(
+                                field          = fiForm("logoFile"),                        // bound Play form field
+                                label          = "Logo (upload)",                         // label text
+                                colSpan = "12",
+                                existingFileUrl = Option(fi).map(_.getLogoKey()).map(k => FilesController.s3Signed(k).toString()),
+                                existingFileName = Option(fi).map(_.getLogoKey())          // optional, only used for PDFs
+                            )
                         </div>
                     </div>
                 </div>

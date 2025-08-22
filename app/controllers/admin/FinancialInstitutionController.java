@@ -3,18 +3,25 @@ package controllers.admin;
 import com.netra.commons.models.EndpointConfig;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
-import org.springframework.jdbc.core.simple.JdbcClient;
+import play.data.DynamicForm;
 import play.data.Form;
 import play.data.FormFactory;
+import play.data.validation.ValidationError;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
+import services.S3Service;
 import services.db.JdbcWrapper;
+import utilities.dto.FileUpload;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
 
 public class FinancialInstitutionController extends Controller {
 
@@ -23,11 +30,14 @@ public class FinancialInstitutionController extends Controller {
 
     private final JdbcWrapper jdbcClient;
 
+    private final S3Service s3Service;
+
     @Inject
-    public FinancialInstitutionController(FormFactory formFactory, JdbcWrapper db) {
+    public FinancialInstitutionController(FormFactory formFactory, JdbcWrapper db, S3Service s3Service) {
         this.formFactory = formFactory;
         this.institutionForm = formFactory.form(FinancialInstitution.class);
         this.jdbcClient = db;
+        this.s3Service = s3Service;
     }
 
     public Result createNewFinInst(Http.Request request){
@@ -38,7 +48,52 @@ public class FinancialInstitutionController extends Controller {
 
     public Result saveNewFinInst(Http.Request request){
 
+        Form<FinancialInstitution> formData = institutionForm.bindFromRequest(request);
+
+        Map<String,String> raw = formData.rawData();
+
+        System.out.println(raw);
+
+
+        //todo: validate here
+        formData.withError("name", "Name already taken");
+        formData.withError("code", "Code already taken");
+        System.out.println(formData.hasGlobalErrors()+" form has error>> "+formData.hasErrors());
+        if (formData.hasErrors()) {
+            System.out.println("rteurning here....");
+            for(ValidationError error :formData.errors()){
+                System.out.println(error.key() + " "+error.message());
+            }
+            return badRequest(views.html.admin.fin_ints_form.render(formData, new FinancialInstitution(), request));
+        }
+
+        // Extract uploader-specific fields separately
+        String logoBase64 = request.body().asFormUrlEncoded().get("logoFile_binary")[0];
+        String logoActionStr = request.body().asFormUrlEncoded().get("logoFile_action")[0];
+        FileUpload.FileAction logoAction = FileUpload.FileAction.fixActionTypeFromString(logoActionStr);
+
+        FinancialInstitution institution = formData.get();
+
+
+        if(BasicUtil.validString(logoActionStr)){
+             institution.setLogoKey(uploadLogo(logoActionStr));
+        }
+
+
+
+
+        //  Persist the main entity
+        //saveFinancialInstitution(institution);
+
+
+
         return ok("success");
+    }
+
+    private String uploadLogo(String dataUri){
+
+      String key = s3Service.uploadBase64(dataUri, "logos");
+      return key;
     }
 
     public Result updateOldFinInst(Long id, Http.Request request){

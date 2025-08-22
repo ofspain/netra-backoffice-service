@@ -24,11 +24,26 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.7" % Runtime,
   "org.flywaydb" % "flyway-core" % "11.11.1",
   "org.flywaydb" % "flyway-database-postgresql" % "11.11.1" % Runtime,
-  "com.netra" % "commons-netra" % "0.0.1-a" exclude("org.springframework.boot", "spring-boot-starter-validation")
+  "com.netra" % "commons-netra" % "0.0.1-a"
+    exclude("org.springframework.boot", "spring-boot-starter-validation")
+    exclude("javax.validation", "validation-api")
+    exclude("org.hibernate.validator", "hibernate-validator")
+    exclude("org.springframework", "spring-context")
+    exclude("org.springframework", "spring-core")
+    exclude("org.springframework", "spring-beans")
+    exclude("org.springframework", "spring-expression"),
+    "software.amazon.awssdk" % "s3" % "2.32.26"
+
+//  "org.hibernate.validator" % "hibernate-validator" % "6.2.5.Final",
+//  "org.glassfish" % "jakarta.el" % "4.0.0",
+//  "javax.validation" % "validation-api" % "2.0.1.Final",
 )
 
 dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % "2.14.3",
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.3",
-  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.14.3"
+  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.14.3",
+//
+//  "javax.validation" % "validation-api" % "2.0.1.Final",
+//  "org.hibernate.validator" % "hibernate-validator" % "6.2.5.Final"
 )

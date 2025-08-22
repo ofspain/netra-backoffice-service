@@ -1,0 +1,70 @@
+@(field: Field,
+        label: String,
+        colSPan: String = "6",
+        required: Boolean = false,
+        htmlValidationMessage: String = "",
+        attributes: scala.collection.immutable.Map[String, String] = scala.collection.immutable.Map(),
+        inputType: String = "text",   // "text", "email", "password", "textarea"
+        default: String = "",
+        helpText: Option[String] = None)
+
+<div class="col-md-@colSPan">
+    <label class="form-label">@Html(label) @field.hasErrors </label>
+
+    @if(inputType == "textarea") {
+        <textarea name="@field.name" class="form-control @if(field.hasErrors) {is-invalid}"
+            @for((key,value) <- attributes){ @key = "@value" }>@field.value.getOrElse(default)
+        </textarea>
+    } else {
+        <input type="@inputType" name="@field.name" class="form-control @if(field.hasErrors) {is-invalid}"
+            @if(!"password".equals(inputType)) { value="@field.value.getOrElse(default)" }
+            @for((key,value) <- attributes){ @key = "@value" }
+            @if(required){ required }
+        />
+    }
+
+    @if(field.hasErrors) {
+        <div class="invalid-feedback d-block">@{field.error.map(_.message)}</div>
+    } else {
+        <div class="invalid-feedback">@htmlValidationMessage</div> <!-- stays empty, used by browser validation -->
+        @helpText.map { txt => <div class="form-text" style="color: #0a58ca">@txt</div> }
+    }
+
+</div>
+
+<!-- DOCS -->
+@*
+🔹 Usage Examples
+
+Text field (email)
+
+@fieldComponent(myForm("email"), "Email", Map("required" -> "true"), "email", "", Some("We’ll never share your email."))
+
+
+Password field
+
+@fieldComponent(myForm("password"), "Password", Map("required" -> "true"), "password")
+
+
+Textarea (description)
+
+@fieldComponent(myForm("description"), "Description", Map("rows" -> "4"), "textarea", "", Some("Give a short description of your project."))
+
+🔹 Output (Bootstrap 5-native)
+<div class="col-md-6">
+<label class="form-label">Description</label>
+<textarea name="description" class="form-control" rows="4"></textarea>
+<div class="form-text">Give a short description of your project.</div>
+</div>
+
+
+Now you’ve got one single universal field component 🚀 — it handles:
+
+Inputs (text, email, password, etc.)
+
+Textareas
+
+Error handling with .invalid-feedback
+
+Optional help/description text
+*@

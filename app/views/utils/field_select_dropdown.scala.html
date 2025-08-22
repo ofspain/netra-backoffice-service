@@ -1,0 +1,19 @@
+@(field: Field, label: String, options: scala.collection.immutable.Map[String, String], attributes: scala.collection.immutable.Map[String, String] = scala.collection.immutable.Map(), helpText: Option[String] = None)
+
+<div class="col-md-6">
+    <label class="form-label">@Html(label)</label>
+    <select name="@field.name" class="form-select @if(field.hasErrors) {is-invalid}"
+            @for((key,value) <- attributes){ @key = "@value" } >
+            @for((value, display) <- options) {
+                <option value="@value" @if(field.value.contains(value)) {selected}>@display</option>
+            }
+    </select>
+
+    @if(field.hasErrors) {
+        <div class="invalid-feedback">@{field.error.map(_.message)}</div>
+    } else {
+        @helpText.map { txt => <div class="form-text">@txt</div> }
+    }
+</div>
+
+    @* USAGE:  @fieldSelect(myForm("country"), "Country", Seq("us" -> "USA", "uk" -> "United Kingdom")) *@
