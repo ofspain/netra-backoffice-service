@@ -10,8 +10,10 @@ import play.data.validation.ValidationError;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
+import services.FinancialInstitutionService;
 import services.S3Service;
 import services.db.JdbcWrapper;
+import utilities.FormDataValidators;
 import utilities.dto.FileUpload;
 
 import javax.inject.Inject;
@@ -28,15 +30,15 @@ public class FinancialInstitutionController extends Controller {
     private final FormFactory formFactory;
     private final Form<FinancialInstitution> institutionForm;
 
-    private final JdbcWrapper jdbcClient;
+    private final FinancialInstitutionService finInstService;
 
     private final S3Service s3Service;
 
     @Inject
-    public FinancialInstitutionController(FormFactory formFactory, JdbcWrapper db, S3Service s3Service) {
+    public FinancialInstitutionController(FormFactory formFactory, FinancialInstitutionService finInstService, S3Service s3Service) {
         this.formFactory = formFactory;
         this.institutionForm = formFactory.form(FinancialInstitution.class);
-        this.jdbcClient = db;
+        this.finInstService = finInstService;
         this.s3Service = s3Service;
     }
 
@@ -55,39 +57,42 @@ public class FinancialInstitutionController extends Controller {
         System.out.println(raw);
 
 
-        //todo: validate here
-        formData.withError("name", "Name already taken");
-        formData.withError("code", "Code already taken");
-        System.out.println(formData.hasGlobalErrors()+" form has error>> "+formData.hasErrors());
+        formData = FormDataValidators.validateFinancialInstitution(formData,finInstService);
+
+
+        EndpointConfig endpointConfig = formData.get().getEndpointConfig();
+        Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig");
+
+        for (Map.Entry<String, String> entry : endpointErrors.entrySet()) {
+            formData = formData.withError(entry.getKey(), entry.getValue());
+        }
+
+
         if (formData.hasErrors()) {
-            System.out.println("rteurning here....");
             for(ValidationError error :formData.errors()){
                 System.out.println(error.key() + " "+error.message());
             }
             return badRequest(views.html.admin.fin_ints_form.render(formData, new FinancialInstitution(), request));
         }
 
-        // Extract uploader-specific fields separately
-        String logoBase64 = request.body().asFormUrlEncoded().get("logoFile_binary")[0];
-        String logoActionStr = request.body().asFormUrlEncoded().get("logoFile_action")[0];
-        FileUpload.FileAction logoAction = FileUpload.FileAction.fixActionTypeFromString(logoActionStr);
+
+        String logoBase64 = request.body().asFormUrlEncoded().get("logoKey_binary")[0];
+//        String logoActionStr = request.body().asFormUrlEncoded().get("logoKey_action")[0];
+//        FileUpload.FileAction logoAction = FileUpload.FileAction.fixActionTypeFromString(logoActionStr);
 
         FinancialInstitution institution = formData.get();
 
 
-        if(BasicUtil.validString(logoActionStr)){
-             institution.setLogoKey(uploadLogo(logoActionStr));
+        //todo: upload logo here
+        if(BasicUtil.validString(logoBase64)){
+             institution.setLogoKey(uploadLogo(logoBase64));
         }
 
 
 
+        institution = finInstService.saveFinancialInstitution(institution);
 
-        //  Persist the main entity
-        //saveFinancialInstitution(institution);
-
-
-
-        return ok("success");
+        return ok(views.html.admin.fin_inst_single.render(institution,request));
     }
 
     private String uploadLogo(String dataUri){

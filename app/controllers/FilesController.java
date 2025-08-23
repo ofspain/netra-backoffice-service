@@ -15,9 +15,7 @@ public class FilesController  extends Controller {
     public FilesController(S3Service s3Service){
         this.s3Service = s3Service;
     }
-    public Result s3Signed(String key){
-        return ok("success");
-    }
+
 
     public Result s3Thumb(String key){
         return ok("success");

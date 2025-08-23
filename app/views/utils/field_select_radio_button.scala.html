@@ -1,6 +1,6 @@
-@(field: Field, label: String, options: scala.collection.immutable.Map[String, String], helpText: Option[String] = None)
+@(field: Field, label: String, colSpan: String, options: scala.collection.immutable.Map[String, String], helpText: Option[String] = None)
 
-<div class="col-md-6">
+<div class="col-md-@colSpan">
     <label class="form-label d-block">@Html(label)</label>
     @for((value, display) <- options) {
         <div class="form-check">

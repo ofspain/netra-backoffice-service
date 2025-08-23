@@ -3,7 +3,7 @@ package scalas.modules
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 import scalas.services.FlywayInitializer
-import services.S3Service
+import services.{FinancialInstitutionService, S3Service}
 import services.db.JdbcWrapper
 
 
@@ -12,7 +12,8 @@ class ConfigModule extends Module {
     Seq(
       bind[FlywayInitializer].toSelf.eagerly(),  // ensures it runs at startup
       bind[JdbcWrapper].toSelf.eagerly(),
-      bind[S3Service].toSelf.eagerly()
+      bind[S3Service].toSelf.eagerly(),
+      bind[FinancialInstitutionService].toSelf
     )
   }
 }

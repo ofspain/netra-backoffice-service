@@ -4,9 +4,11 @@
 @import com.netra.commons.models.EndpointConfig.HTTPMethod
 
 @import controllers.admin.routes
-@import controllers.routes.FilesController
+@import utilities.FileUtils
 
 @import views.html.utils
+
+@import scala.collection.immutable.Map
 
 @(fiForm: Form[FinancialInstitution], fi: FinancialInstitution)(implicit req: play.mvc.Http.Request)
 
@@ -64,48 +66,23 @@
                     <div class="card-header">General Information</div>
                     <div class="card-body">
                         <div class="row g-3">
-                            @utils.field_text(fiForm("name"), "Name", colSPan="12",required = true, htmlValidationMessage = "Name is required.", helpText = scala.Some("The common name this institution is known by"))
+                            @utils.field_text(fiForm("name"), "Name", colSpan="12",required = true, htmlValidationMessage = "Name is required.", helpText = scala.Some("The common name this institution is known by"))
 
-                            @utils.field_text(fiForm("code"), "Code", required = true, htmlValidationMessage = "Code is required.",  helpText = scala.Some("A unique code for this institution as used in their respective emails"))
-
-@*                            <div class="col-md-3">*@
-@*                                <label class="form-label">Domain Code</label>*@
-@*                                <input name="domainCode" type="text" class="form-control" required value="@Option(fi).map(_.getDomainCode()).getOrElse("")">*@
-@*                                <div class="invalid-feedback">Domain code is required.</div>*@
-@*                            </div>*@
-
-                            @utils.field_text(fiForm("domainCode"), "Domain Code", attributes = scala.collection.immutable.Map("placeholder"->"Enter the code for this institution, if different from the code"), helpText = scala.Some("A code for this institution, defaults to code used in emails"))
+                            @utils.field_text(fiForm("code"), "Code", required = true, htmlValidationMessage = "Code is required.",  helpText = scala.Some("A unique code for this institution as issued by the regulatory authorities"))
 
 
-                            <div class="col-md-3 d-flex align-items-end">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="disabled" id="disabledSwitch" @if(Option(fi).exists(_.getDisabled() == java.lang.Boolean.TRUE)){checked}>
-                                    <label class="form-check-label" for="disabledSwitch">Disabled</label>
-                                </div>
-                            </div>
-@*
-                            <div class="col-md-6">
-                                <label class="form-label">Logo (upload)</label>
-                                <input class="form-control" type="file" name="logoFile" accept="image/*">
-                                @if(isEdit) {
-                                    <input type="hidden" name="existingLogoKey" value="@Option(fi).map(_.getLogoKey()).getOrElse("")">
-                                }
-                                <div class="form-text">We’ll store the S3 key as <code>logo_key</code>.</div>
-                            </div>
 
-                            <div class="col-md-3 text-center">
-                                <img id="logoPreview"
-                                src=""
-                                class="img-fluid logo-img border rounded @if(Option(fi).forall(_.getLogoKey() == null)){"d-none"}"
-                                alt="logo preview">
-                            </div>
-*@
+                            @utils.field_text(fiForm("domainCode"), "Domain Code", required = true,  attributes = scala.collection.immutable.Map("placeholder"->"Enter the domain code"), helpText = scala.Some("A code for this institution as used in official emails"))
+
+
+
+                            @utils.field_toggle_button(field = fiForm("disabled"), label = "Disabled", id = "disabledSwitch", colSpan = "6", helpText = Some("Flag institution as active or not"), extraCss = " d-flex align-items-end")
 
                             @utils.base64_converter_uploader(
                                 field          = fiForm("logoFile"),                        // bound Play form field
                                 label          = "Logo (upload)",                         // label text
                                 colSpan = "12",
-                                existingFileUrl = Option(fi).map(_.getLogoKey()).map(k => FilesController.s3Signed(k).toString()),
+                                existingFileUrl = Option(fi).map(_.getLogoKey()).map(k => FileUtils.s3Signed(k)),
                                 existingFileName = Option(fi).map(_.getLogoKey())          // optional, only used for PDFs
                             )
                         </div>
@@ -124,40 +101,45 @@
                     <div class="card-header">Endpoint Config – Basics</div>
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-8">
-                                <label class="form-label">Description</label>
-                                <input name="endpointConfig.description" type="text" class="form-control" value="">
-                            </div>
+                            @utils.field_text(field = fiForm("endpointConfig.description"), label = "Description", colSpan = "8")
 
-                            <div class="col-md-8">
-                                <label class="form-label">Base URL</label>
-                                <input name="endpointConfig.baseUrl" type="url" class="form-control" placeholder="https://api.example.com" required>
-                                <div class="invalid-feedback">Valid Base URL is required.</div>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Timeout (ms)</label>
-                                <input name="endpointConfig.timeoutMillis" type="number" min="100" step="100" value="5000" class="form-control" required>
-                            </div>
 
-                            <div class="col-md-4 d-flex align-items-end">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="requiresAuthSwitch" name="endpointConfig.requiresAuth">
-                                    <label class="form-check-label" for="requiresAuthSwitch">Requires Auth</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4 auth-type d-none">
-                                <label class="form-label">Auth Type</label>
-                                <select class="form-select" name="endpointConfig.authType">
-                                @for(a <- AuthType.values()) {
-                                    <option value="@a">@a</option>
-                                }
-                                </select>
-                            </div>
+
+                            @utils.field_text(field = fiForm("endpointConfig.baseUrl"), label = "Base URL", colSpan = "8", required = true, htmlValidationMessage = "Valid Base URL is required.",
+                                    attributes = scala.collection.immutable.Map("placeholder"->"https://api.example.com"), inputType = "url")
+
+
+
+                            @utils.field_text(field = fiForm("endpointConfig.timeoutMillis"), label = "Timeout (ms)", colSpan = "4", default = "5000",
+                                attributes = scala.collection.immutable.Map("min"->"100", "step"->"100"), inputType = "number")
+
+
+
+                            @utils.field_toggle_button(field = fiForm("endpointConfig.requiresAuth"), label = "Requires Auth", id = "requiresAuthSwitch", colSpan = "4", helpText = Some("Flag endpoint as requires authentication"), extraCss = " d-flex align-items-end")
+
+
+
+                            @utils.field_select_dropdown(
+                                field     = fiForm("endpointConfig.authType"),
+                                label     = "Auth Type",
+                                colSpan = "4",
+                                options   = AuthType.values().map(a => a.toString -> a.toString).toMap,
+                                extraCss =  "auth-type d-none col-md-4"
+                            )
 
                             <div class="col-12">
                                 <label class="form-label">Request Body Template (JSON or text)</label>
                                 <textarea name="endpointConfig.requestBodyTemplate" class="form-control" rows="4" placeholder="{ }"></textarea>
                             </div>
+
+                            @utils.field_text(
+                                field      = fiForm("endpointConfig.requestBodyTemplate"),
+                                label      = "Request Body Template (JSON or text)",
+                                colSpan    = "12",
+                                inputType  = "textarea",
+                                attributes = Map("rows" -> "4", "placeholder" -> "{ }"),
+                                helpText   = Some("Provide a JSON or text template that will be used as the request body.")
+                            )
                         </div>
                     </div>
                 </div>
@@ -168,7 +150,6 @@
                 </div>
             </div>
 
-                <!-- STEP 3: Advanced -->
             <div class="tab-pane fade" id="step3" role="tabpanel" aria-labelledby="step3-tab">
                 <div class="card mb-3">
                     <div class="card-header">Endpoints</div>
@@ -176,20 +157,22 @@
                         <div class="row g-3">
                                 <!-- Unique Transaction -->
                             <div class="col-12">
-                                <h6 class="mb-2">Unique Transaction</h6>
+                                <h6 class="mb-2">Unique Transaction Endpoint</h6>
                             </div>
-                            <div class="col-md-8">
-                                <label class="form-label">URL</label>
-                                <input name="endpointConfig.uniqueTransaction.url" type="text" class="form-control" placeholder="/v1/tx/{id}">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Method</label>
-                                <select class="form-select" name="endpointConfig.uniqueTransaction.method">
-                                @for(m <- HTTPMethod.values()) {
-                                    <option value="@m">@m</option>
-                                }
-                                </select>
-                            </div>
+
+                            @utils.field_text(
+                                fiForm("endpointConfig.uniqueTransaction.url"),
+                                "URL",
+                                colSpan = "8",
+                                attributes = Map("placeholder" -> "/v1/tx/{id}")
+                            )
+
+                            @utils.field_select_dropdown(
+                                fiForm("endpointConfig.uniqueTransaction.method"),
+                                "Method",
+                                colSpan = "4",
+                                options = HTTPMethod.values().map(m => m.toString -> m.toString).toMap
+                            )
 
                                 <!-- Headers (Unique) -->
                             <div class="col-12">
@@ -217,18 +200,22 @@
 
                                 <!-- Multiple Transaction -->
                             <div class="col-12">
-                                <h6 class="mb-2">Multiple Transaction</h6>
+                                <h6 class="mb-2">Multiple Transactions Endpoint</h6>
                             </div>
-                            <div class="col-md-8">
-                                <label class="form-label">URL</label>
-                                <input name="endpointConfig.multipleTransaction.url" type="text" class="form-control" placeholder="/v1/tx/bulk">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Method</label>
-                                <select class="form-select" name="endpointConfig.multipleTransaction.method">
-                                @for(m <- HTTPMethod.values()) { <option value="@m">@m</option> }
-                                </select>
-                            </div>
+
+                            @utils.field_text(
+                                fiForm("endpointConfig.multipleTransaction.url"),
+                                "URL",
+                                colSpan = "8",
+                                attributes = Map("placeholder" -> "/v1/tx/bulk")
+                            )
+
+                            @utils.field_select_dropdown(
+                                fiForm("endpointConfig.multipleTransaction.method"),
+                                "Method",
+                                colSpan = "4",
+                                options = HTTPMethod.values().map(m => m.toString -> m.toString).toMap
+                            )
 
                                 <!-- Headers (Multiple) -->
                             <div class="col-12">
@@ -251,7 +238,6 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div> <!-- /row -->
                     </div>
                 </div>
@@ -261,37 +247,27 @@
                     <div class="card-body">
                         <div class="row g-3">
                                 <!-- Proxy -->
-                            <div class="col-md-3 d-flex align-items-end">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="useProxySwitch" name="endpointConfig.useProxy">
-                                    <label class="form-check-label" for="useProxySwitch">Use Proxy</label>
-                                </div>
-                            </div>
+                            @utils.field_toggle_button(
+                                fiForm("endpointConfig.useProxy"),
+                                "Use Proxy",
+                                id = "useProxySwitch",
+                                colSpan = "3",
+                                extraCss = "d-flex align-items-end"
+                            )
+
                             <div class="col-12 proxy-fields d-none">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label">Proxy Host</label>
-                                        <input name="endpointConfig.proxy.host" type="text" class="form-control">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">Port</label>
-                                        <input name="endpointConfig.proxy.port" type="number" class="form-control">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Username</label>
-                                        <input name="endpointConfig.proxy.username" type="text" class="form-control">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Password</label>
-                                        <input name="endpointConfig.proxy.password" type="password" class="form-control">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Type</label>
-                                        <select name="endpointConfig.proxy.type" class="form-select">
-                                            <option value="HTTP">HTTP</option>
-                                            <option value="SOCKS">SOCKS</option>
-                                        </select>
-                                    </div>
+                                    @utils.field_text(fiForm("endpointConfig.proxy.host"), "Proxy Host", "4")
+                                    @utils.field_text(fiForm("endpointConfig.proxy.port"), "Port", "2", inputType="number")
+                                    @utils.field_text(fiForm("endpointConfig.proxy.username"), "Username", "3")
+                                    @utils.field_text(fiForm("endpointConfig.proxy.password"), "Password", "3", inputType="password")
+
+                                    @utils.field_select_dropdown(
+                                        fiForm("endpointConfig.proxy.type"),
+                                        "Type",
+                                        colSpan = "3",
+                                        options = Map("HTTP" -> "HTTP", "SOCKS" -> "SOCKS")
+                                    )
                                 </div>
                             </div>
 
@@ -299,40 +275,26 @@
                             <div class="col-12">
                                 <h6 class="mb-2">Retry Config</h6>
                             </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Max Attempts</label>
-                                <input name="endpointConfig.retryConfig.maxAttempts" type="number" value="3" class="form-control">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Initial Delay (ms)</label>
-                                <input name="endpointConfig.retryConfig.initialDelayMillis" type="number" value="200" class="form-control">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Multiplier</label>
-                                <input name="endpointConfig.retryConfig.multiplier" type="number" step="0.1" value="2.0" class="form-control">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Max Delay (ms)</label>
-                                <input name="endpointConfig.retryConfig.maxDelayMillis" type="number" value="2000" class="form-control">
-                            </div>
+                            @utils.field_text(fiForm("endpointConfig.retryConfig.maxAttempts"), "Max Attempts", "3", inputType="number", default="3")
+                            @utils.field_text(fiForm("endpointConfig.retryConfig.initialDelayMillis"), "Initial Delay (ms)", "3", inputType="number", default="200")
+                            @utils.field_text(fiForm("endpointConfig.retryConfig.multiplier"), "Multiplier", "3", inputType="number", attributes = Map("step" -> "0.1"), default="2.0")
+                            @utils.field_text(fiForm("endpointConfig.retryConfig.maxDelayMillis"), "Max Delay (ms)", "3", inputType="number", default="2000")
 
                                 <!-- Fallback -->
                             <div class="col-12">
                                 <h6 class="mb-2">Fallback Config</h6>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Type</label>
-                                <select name="endpointConfig.fallbackConfig.type" class="form-select" id="fallbackTypeSelect">
-                                    <option value="">None</option>
-                                    <option value="STATIC_RESPONSE">STATIC_RESPONSE</option>
-                                    <option value="REDIRECT_ENDPOINT">REDIRECT_ENDPOINT</option>
-                                    <option value="EXCEPTION">EXCEPTION</option>
-                                </select>
-                            </div>
-                            <div class="col-12 fallback-value d-none">
-                                <label class="form-label">Value (JSON map)</label>
-                                <textarea name="endpointConfig.fallbackConfig.value" class="form-control" rows="3" placeholder='{"code":"FALLBACK","message":"..."}'></textarea>
-                            </div>
+ @*
+                            @utils.field_select_dropdown(
+                                fiForm("endpointConfig.fallbackConfig.type"),
+                                "Type",
+                                colSpan = "4",
+                                options = Map("" -> "None", "STATIC_RESPONSE" -> "STATIC_RESPONSE", "REDIRECT_ENDPOINT" -> "REDIRECT_ENDPOINT", "EXCEPTION" -> "EXCEPTION"),
+                                attributes = Map("id" -> "fallbackTypeSelect")
+                            )
+                            @utils.field_text(fiForm("endpointConfig.fallbackConfig.value"), "Value (JSON map)", "12", inputType="textarea",
+                                attributes = Map("rows" -> "3", "placeholder" -> """{"code":"FALLBACK","message":"..."}"""))
+                            *@
                         </div>
                     </div>
                 </div>
@@ -342,6 +304,7 @@
                     <button type="submit" class="btn btn-success">@if(isEdit) {Update} else {Create}</button>
                 </div>
             </div>
+
         </div>
     </form>
 </div>
@@ -405,25 +368,38 @@
                     const prefix = targetSel === '#uniqueHeaders'
                             ? 'endpointConfig.uniqueTransaction.headers'
                             : 'endpointConfig.multipleTransaction.headers';
+
                     const row = document.createElement('div');
-                    row.className = 'row g-2 mt-1';
+                    row.className = 'row g-2 mt-1 align-items-center';
                     row.innerHTML = `
-        <div class="col-md-4">
-          <input name="${prefix}[${count}].name" class="form-control" placeholder="Name">
-        </div>
-        <div class="col-md-6">
-          <input name="${prefix}[${count}].value" class="form-control" placeholder="Value">
-        </div>
-        <div class="col-md-2 d-flex align-items-center">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="${prefix}[${count}].dynamic" id="${prefix==='endpointConfig.uniqueTransaction.headers'?'uh':'mh'}${count}">
-            <label class="form-check-label small" for="${prefix==='endpointConfig.uniqueTransaction.headers'?'uh':'mh'}${count}">Dynamic</label>
-          </div>
-        </div>`;
+                                <div class="col-md-4">
+                                    <input name="${prefix}[${count}].name" class="form-control" placeholder="Name">
+                                </div>
+                                <div class="col-md-4">
+                                    <input name="${prefix}[${count}].value" class="form-control" placeholder="Value">
+                                </div>
+                                <div class="col-md-2 d-flex align-items-center">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="${prefix}[${count}].dynamic" id="${prefix==='endpointConfig.uniqueTransaction.headers'?'uh':'mh'}${count}">
+                                        <label class="form-check-label small" for="${prefix==='endpointConfig.uniqueTransaction.headers'?'uh':'mh'}${count}">Dynamic</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-2 d-flex">
+                                    <button type="button" class="btn btn-sm btn-danger remove-header">&times;</button>
+                                </div>
+                    `;
+
+                    // Attach remove logic
+                    row.querySelector('.remove-header').addEventListener('click', () => {
+                        row.remove();
+                    });
+
                     list.appendChild(row);
                 });
             }
+
             document.querySelectorAll('.add-header').forEach(wireAddHeader);
+
 
             // Logo preview
             const logoInput = document.querySelector('input[name="logoFile"]');

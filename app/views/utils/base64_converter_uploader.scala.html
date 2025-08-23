@@ -9,6 +9,10 @@
         existingFileName: Option[String] = Some(""),    // Used for PDF display
         helpText: Option[String] = Some(""))
 
+@has_existing = @{
+    !existingFileUrl.get.isEmpty
+}
+
 <div class="form-group col-md-@colSpan file-field @if(field.hasErrors) {has-error}">
     <label class="form-label">@Html(label)</label>
 
@@ -95,9 +99,8 @@
 
         <!-- Inline message -->
     <small class="file-msg d-block mt-1"></small>
-
         <!-- Preview area -->
-    <div class="file-preview mt-2">
+    <div class="file-preview mt-2" style="@if(!has_existing) {display:none}">
         @existingFileUrl.map { url =>
             @if(fileType == "image") {
                 <img src="@url" alt="Existing file" style="max-height:100px; display:block; margin-top:5px;">
@@ -111,7 +114,7 @@
 
         <!-- Remove button -->
     <button type="button" class="btn btn-sm btn-outline-danger remove-btn mt-2"
-        style="@if(existingFileUrl.isEmpty) {display:none}"
+        style="@if(!has_existing) {display:none}"
         onclick="
                 const wrapper = this.closest('.file-field');
                 const fileInput = wrapper.querySelector('input[type=file]');

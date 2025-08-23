@@ -75,4 +75,8 @@ public class FileUtils {
             default: return "bin";
         }
     }
+
+    public static String s3Signed(String key){
+        return "";
+    }
 }

@@ -5,7 +5,7 @@
 # An example controller showing a sample home page
 GET     /auth/logout                controllers.AuthController.logout(request: Request)
 
-GET     /files-signed              controllers.FilesController.s3Signed(key: String)
+#GET     /files-signed              controllers.FilesController.s3Signed(key: String)
 GET     /files-s3-thumbnail        controllers.FilesController.s3Thumb(key: String)
 
 GET     /fin-insts                 controllers.admin.FinancialInstitutionController.index(page: Integer, request: Request)

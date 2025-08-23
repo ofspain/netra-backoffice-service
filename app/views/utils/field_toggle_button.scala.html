@@ -1,0 +1,22 @@
+@(field: Field, label: String, id: String = "",  colSpan: String = "6", helpText: Option[String] = None, extraCss: String = "")
+
+<div class="col-md-@colSpan @extraCss">
+    <div class="form-check form-switch">
+            <!-- hidden field ensures a "false" is submitted if checkbox is unchecked -->
+        <input type="hidden" name="@field.name" value="false">
+
+        <input class="form-check-input @if(field.hasErrors) {is-invalid}"
+        type="checkbox"
+        id="@{ if(id.isEmpty) field.id else id }"
+        name="@field.name"
+        value="true"
+        @if(field.value.exists(_.toBooleanOption.getOrElse(false))) { checked }>
+        <label class="form-check-label" for="@field.id">@Html(label)</label>
+    </div>
+
+    @if(field.hasErrors) {
+       <br/> <small class="invalid-feedback d-block">@{field.error.map(_.message)}</small>
+    } else {
+        @helpText.map { txt => <br/> <small class="form-text" style="color: #0a58ca">@txt</small> }
+    }
+</div>

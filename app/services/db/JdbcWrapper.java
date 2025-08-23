@@ -140,20 +140,20 @@ public class JdbcWrapper {
         }
 
         // Execute single procedure and return output parameters
-        public CompletionStage<Map<Integer, Object>> executeWithOutput() {
+        public <T> CompletionStage<T> executeForOutput(int paramIndex, Class<T> type) {
             if (singleParameters == null) {
-                throw new IllegalStateException("Output parameters require single execution, use executeBatch for batch");
+                throw new IllegalStateException(
+                        "Output parameters require single execution, use executeBatch for batch"
+                );
             }
             return CompletableFuture.supplyAsync(() -> {
                 try {
                     return db.withConnection(conn -> {
                         try (CallableStatement stmt = prepareStatement(conn, singleParameters)) {
                             stmt.execute();
-                            Map<Integer, Object> results = new HashMap<>();
-                            for (Map.Entry<Integer, Integer> outParam : outParameters.entrySet()) {
-                                results.put(outParam.getKey(), stmt.getObject(outParam.getKey()));
-                            }
-                            return results;
+
+                            Object raw = stmt.getObject(paramIndex);
+                            return type.cast(raw);
                         }
                     });
                 } catch (Exception e) {
@@ -162,6 +162,7 @@ public class JdbcWrapper {
                 }
             });
         }
+
 
         private CallableStatement prepareStatement(Connection conn, List<Object> params) throws SQLException {
             String placeholders = params.stream().map(p -> "?").collect(Collectors.joining(","));
