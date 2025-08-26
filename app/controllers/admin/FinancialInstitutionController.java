@@ -1,5 +1,6 @@
 package controllers.admin;
 
+import com.netra.commons.enums.DomainType;
 import com.netra.commons.models.EndpointConfig;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
@@ -14,6 +15,7 @@ import services.FinancialInstitutionService;
 import services.S3Service;
 import services.db.JdbcWrapper;
 import utilities.FormDataValidators;
+import utilities.dto.EntityWithUpload;
 import utilities.dto.FileUpload;
 
 import javax.inject.Inject;
@@ -61,6 +63,9 @@ public class FinancialInstitutionController extends Controller {
 
 
         EndpointConfig endpointConfig = formData.get().getEndpointConfig();
+        endpointConfig.setDomainType(DomainType.FINANCIAL_INSTITUTION);
+        endpointConfig.setDomainCode(formData.get().getDomainCode());
+
         Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig");
 
         for (Map.Entry<String, String> entry : endpointErrors.entrySet()) {
@@ -68,22 +73,24 @@ public class FinancialInstitutionController extends Controller {
         }
 
 
+        String logoBase64 = formData.rawData().get("logo_binary");
+
         if (formData.hasErrors()) {
             for(ValidationError error :formData.errors()){
                 System.out.println(error.key() + " "+error.message());
             }
-            return badRequest(views.html.admin.fin_ints_form.render(formData, new FinancialInstitution(), request));
+            FinancialInstitution logoed = new FinancialInstitution();
+            logoed.setLogoKey(logoBase64);
+            return badRequest(views.html.admin.fin_ints_form.render(formData, logoed, request));
         }
 
 
-        String logoBase64 = request.body().asFormUrlEncoded().get("logoKey_binary")[0];
 //        String logoActionStr = request.body().asFormUrlEncoded().get("logoKey_action")[0];
 //        FileUpload.FileAction logoAction = FileUpload.FileAction.fixActionTypeFromString(logoActionStr);
 
         FinancialInstitution institution = formData.get();
 
 
-        //todo: upload logo here
         if(BasicUtil.validString(logoBase64)){
              institution.setLogoKey(uploadLogo(logoBase64));
         }

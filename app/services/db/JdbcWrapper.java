@@ -2,10 +2,7 @@ package services.db;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -205,8 +202,50 @@ public class JdbcWrapper {
         }
     }
 
+
     // Start a stored procedure call
     public ProcedureCall call(String procedureName) {
         return new ProcedureCall(procedureName);
+    }
+
+
+    public QueryCall sql(String sql) {
+        return new QueryCall(sql);
+    }
+
+
+    public class QueryCall {
+        private final String sql;
+        private final List<Object> parameters = new ArrayList<>();
+
+        private static final Logger LOGGER = Logger.getLogger(JdbcWrapper.class.getName());
+
+
+        private QueryCall(String sql) {
+            this.sql = sql;
+        }
+
+        public QueryCall param(Object value) {
+            parameters.add(value);
+            return this;
+        }
+
+        public <T> CompletionStage<T> query(Function<ResultSet, T> mapper) {
+            return CompletableFuture.supplyAsync(() -> {
+                try {
+                    return db.withConnection(conn -> {
+                        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                            for (int i = 0; i < parameters.size(); i++) {
+                                stmt.setObject(i + 1, parameters.get(i));
+                            }
+                            return mapper.apply(stmt.executeQuery());
+                        }
+                    });
+                } catch (Exception e) {
+                    LOGGER.severe("Failed to execute query: " + e.getMessage());
+                    throw new AppDataAccessException("Query failed", e);
+                }
+            });
+        }
     }
 }

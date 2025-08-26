@@ -7,7 +7,9 @@
         fileType: String = "image",                  // "image" | "pdf" | "*"
         existingFileUrl: Option[String] = Some(""),     // URL to existing file (preview)
         existingFileName: Option[String] = Some(""),    // Used for PDF display
-        helpText: Option[String] = Some(""))
+        helpText: Option[String] = Some(""),
+        selectedBase64File: String = ""
+)
 
 @has_existing = @{
     !existingFileUrl.get.isEmpty
@@ -64,6 +66,7 @@
                const sizeKb = Math.round(file.size / 1024);
                msgEl.textContent = `✓ Valid ${expected.toUpperCase()} selected: ${file.name} (${sizeKb} KB)`;
                msgEl.classList.add('text-success','fw-bold');
+               previewEl.style.display = '';
 
                const reader = new FileReader();
                reader.onload = (e) => {
@@ -94,16 +97,20 @@
            ">
 
         <!-- Hidden inputs -->
-    <input type="hidden" name="@{field.name}_binary">
+    <input type="hidden" name="@{field.name}_binary" @if(!selectedBase64File.isEmpty){value="@selectedBase64File" }>
     <input type="hidden" name="@{field.name}_action" value="@{if(!existingFileUrl.isEmpty) {FileAction.KEEP.name()} else {FileAction.NONE.name()}}" class="file-action">
 
         <!-- Inline message -->
     <small class="file-msg d-block mt-1"></small>
         <!-- Preview area -->
-    <div class="file-preview mt-2" style="@if(!has_existing) {display:none}">
+    <div class="file-preview mt-2" style="@if(!has_existing & selectedBase64File.isBlank) {display:none}">
         @existingFileUrl.map { url =>
             @if(fileType == "image") {
-                <img src="@url" alt="Existing file" style="max-height:100px; display:block; margin-top:5px;">
+                @if(selectedBase64File.isEmpty){
+                    <img src="@url" alt="Existing file" style="max-height:100px; display:block; margin-top:5px;">
+                }else{
+                    <img src="@selectedBase64File" alt="Existing file" style="max-height:100px; display:block; margin-top:5px;">
+                }
             } else if(fileType == "pdf") {
                 <a href="@url" target="_blank" class="text-primary fw-bold" download="@existingFileName.getOrElse("document.pdf")">
                     📄 Download existing PDF (@existingFileName.getOrElse("document.pdf"))

@@ -24,6 +24,14 @@
     }
 }
 
+@selected_base_64 = @{
+    if(fiForm.hasErrors()){
+        fi.getLogoKey()
+    }else{
+        ""
+    }
+}
+
 @views.html.admin.layout("Financial Institution Form", Html(""), scripts, req) {
 
 
@@ -79,11 +87,12 @@
                             @utils.field_toggle_button(field = fiForm("disabled"), label = "Disabled", id = "disabledSwitch", colSpan = "6", helpText = Some("Flag institution as active or not"), extraCss = " d-flex align-items-end")
 
                             @utils.base64_converter_uploader(
-                                field          = fiForm("logoFile"),                        // bound Play form field
+                                field          = fiForm("logo"),                        // bound Play form field
                                 label          = "Logo (upload)",                         // label text
                                 colSpan = "12",
                                 existingFileUrl = Option(fi).map(_.getLogoKey()).map(k => FileUtils.s3Signed(k)),
-                                existingFileName = Option(fi).map(_.getLogoKey())          // optional, only used for PDFs
+                                existingFileName = Option(fi).map(_.getLogoKey()),          // optional, only used for PDFs
+                                selectedBase64File = selected_base_64
                             )
                         </div>
                     </div>

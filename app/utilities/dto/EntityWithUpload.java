@@ -4,7 +4,15 @@ import com.netra.commons.models.BaseEntity;
 
 public class EntityWithUpload<T extends BaseEntity> {
     private T modeledEntity;
-    private FileUpload fileUpload;
+    private String logo;
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
+    }
 
     public void setModeledEntity(T modeledEntity){
         this.modeledEntity = modeledEntity;
@@ -14,11 +22,4 @@ public class EntityWithUpload<T extends BaseEntity> {
         return this.modeledEntity;
     }
 
-    public FileUpload getFileUpload() {
-        return fileUpload;
-    }
-
-    public void setFileUpload(FileUpload fileUpload) {
-        this.fileUpload = fileUpload;
-    }
 }

@@ -29,7 +29,7 @@ public class FormDataValidators {
         }else{
 
 
-            FinancialInstitution potentialOld = financialInstService.findFinancialInstitutionByUniqueKey("code", code);
+            FinancialInstitution potentialOld = financialInstService.findMinimalFinancialInstitutionByUniqueKey("code", code);
 
             if (potentialOld != null) {
                 if (!isUpdate || !potentialOld.getId().equals(id)) {
@@ -43,7 +43,7 @@ public class FormDataValidators {
             fiForm = fiForm.withError("domainCode", "Code as used in official email is required");
         }else{
 
-            FinancialInstitution potentialOld = financialInstService.findFinancialInstitutionByUniqueKey("domain_code", domainCode);
+            FinancialInstitution potentialOld = financialInstService.findMinimalFinancialInstitutionByUniqueKey("domain_code", domainCode);
 
             if (potentialOld != null) {
                 if (!isUpdate || !potentialOld.getId().equals(id)) {
