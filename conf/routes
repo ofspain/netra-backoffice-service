@@ -2,6 +2,14 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+# Security Test routes
+
+# Public routes
+GET     /health          controllers.HealthController.health()
+
+# Secure routes - will require JWT
+GET     /secure-health   controllers.HealthController.secureHealth(request: Request)
+
 # An example controller showing a sample home page
 GET     /auth/logout                controllers.AuthController.logout(request: Request)
 

@@ -18,6 +18,8 @@ Compile / compile / scalacOptions ++= Seq("-target:jvm-21")
 val conf = ConfigFactory.parseFile(new File("conf/application.conf"))
 flywayLocations := Seq(conf.getStringList("flyway.locations").asScala: _*)
 
+lazy val pac4jVersion = "6.2.1"
+
 libraryDependencies ++= Seq(
   guice,
   javaJdbc,
@@ -32,10 +34,14 @@ libraryDependencies ++= Seq(
     exclude("org.springframework", "spring-core")
     exclude("org.springframework", "spring-beans")
     exclude("org.springframework", "spring-expression"),
-    "software.amazon.awssdk" % "s3" % "2.32.26"
+    "software.amazon.awssdk" % "s3" % "2.32.26",
+  "org.pac4j" %% "play-pac4j" % "13.0.0-PLAY3.0",
+  "org.pac4j" % "pac4j-http" % pac4jVersion,
+  "org.pac4j" % "pac4j-jwt"  % pac4jVersion
+
 
 //  "org.hibernate.validator" % "hibernate-validator" % "6.2.5.Final",
-//  "org.glassfish" % "jakarta.el" % "4.0.0",
+//  "org.glassfish" % "jakarta.el" % "4.0.0",  "org.pac4j" % "pac4j-http" % "4.0.3" // For header-based auth
 //  "javax.validation" % "validation-api" % "2.0.1.Final",
 )
 
@@ -43,6 +49,9 @@ dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % "2.14.3",
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.3",
   "com.fasterxml.jackson.core" % "jackson-annotations" % "2.14.3",
+  "org.pac4j" % "pac4j-core" % pac4jVersion,
+  "org.pac4j" % "pac4j-http" % pac4jVersion,
+  "org.pac4j" % "pac4j-jwt"  % pac4jVersion
 //
 //  "javax.validation" % "validation-api" % "2.0.1.Final",
 //  "org.hibernate.validator" % "hibernate-validator" % "6.2.5.Final"

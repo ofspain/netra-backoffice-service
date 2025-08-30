@@ -1,6 +1,7 @@
 package services;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -21,29 +22,23 @@ public class S3Service {
 
     @Inject
     public S3Service(Config config) {
-        this.bucket = config.getString("aws.s3.bucket");
-        String region = config.getString("aws.s3.region");
 
-        if (config.hasPath("aws.s3.accessKeyId") && config.hasPath("aws.s3.secretAccessKey")) {
-            // Dev → use hardcoded keys
+        String profile = config.hasPath("aws.profile") ? config.getString("aws.profile") : null;
+        String region = config.getString("aws.region"); // required
+        this.bucket = config.getString("aws.s3.bucket"); // required
+
+        if (profile != null && !profile.isEmpty()) {
             this.s3 = S3Client.builder()
                     .region(Region.of(region))
-                    .credentialsProvider(
-                            StaticCredentialsProvider.create(
-                                    AwsBasicCredentials.create(
-                                            config.getString("aws.s3.accessKeyId"),
-                                            config.getString("aws.s3.secretAccessKey")
-                                    )
-                            )
-                    )
+                    .credentialsProvider(ProfileCredentialsProvider.create(profile))
                     .build();
         } else {
-            // Prod → use ~/.aws/credentials or IAM role
             this.s3 = S3Client.builder()
                     .region(Region.of(region))
                     .credentialsProvider(DefaultCredentialsProvider.create())
                     .build();
         }
+
     }
 
     public String uploadBase64(String base64, String folder) {
