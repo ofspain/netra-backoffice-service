@@ -23,6 +23,8 @@ lazy val pac4jVersion = "6.2.1"
 libraryDependencies ++= Seq(
   guice,
   javaJdbc,
+  ws,
+  javaWs,
   "org.postgresql" % "postgresql" % "42.7.7" % Runtime,
   "org.flywaydb" % "flyway-core" % "11.11.1",
   "org.flywaydb" % "flyway-database-postgresql" % "11.11.1" % Runtime,
@@ -37,7 +39,8 @@ libraryDependencies ++= Seq(
     "software.amazon.awssdk" % "s3" % "2.32.26",
   "org.pac4j" %% "play-pac4j" % "13.0.0-PLAY3.0",
   "org.pac4j" % "pac4j-http" % pac4jVersion,
-  "org.pac4j" % "pac4j-jwt"  % pac4jVersion
+  "org.pac4j" % "pac4j-jwt"  % pac4jVersion,
+  "com.typesafe.play" %% "play-ahc-ws" % "2.9.6"
 
 
 //  "org.hibernate.validator" % "hibernate-validator" % "6.2.5.Final",

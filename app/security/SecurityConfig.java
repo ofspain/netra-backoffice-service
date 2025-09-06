@@ -13,15 +13,19 @@ import org.pac4j.core.exception.CredentialsException;
 import org.pac4j.core.profile.UserProfile;
 import org.pac4j.core.util.CommonHelper;
 import org.pac4j.http.client.direct.HeaderClient;
+import org.pac4j.jwt.config.signature.RSASignatureConfiguration;
 import org.pac4j.jwt.config.signature.SecretSignatureConfiguration;
 import org.pac4j.jwt.credentials.authenticator.JwtAuthenticator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import play.api.Configuration;
 import play.mvc.Http;
+import utilities.rest.RestClientService;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -34,20 +38,33 @@ public class SecurityConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityConfig.class);
     private final Config config;
 
-    private final String[] WHITE_LISTED_PATH = {"health"};
+    private final RestClientService restClientService;
+
 
     @Inject
-    public SecurityConfig() {
+    public SecurityConfig(RestClientService restClientService, Configuration configuration) {
+        this.restClientService = restClientService;
         //test $env:JWT_SECRET = "your-very-long-secret-key-at-least-32-char-your-very-long-secret-key-at-least-32-char"
-        // JWT secret (HMAC-SHA256, 256-bit minimum)
-        String jwtSecret = System.getenv("JWT_SECRET");
-        if (jwtSecret == null || jwtSecret.length() < 32) {
-            throw new IllegalStateException("JWT_SECRET environment variable must be at least 32 bytes");
-        }
 
-        // Configure JWT authenticator with custom validation
-        SecretSignatureConfiguration signatureConfig = new SecretSignatureConfiguration(jwtSecret);
+        com.typesafe.config.Config underlyingConfig = configuration.underlying();
+
+        boolean authrexPath = underlyingConfig.hasPath("services.authrex-path");
+        com.typesafe.config.Config authrexPathConfig = authrexPath ? underlyingConfig.getConfig("services.authrex-path") : com.typesafe.config.ConfigFactory.empty();
+
+        String baseURL = authrexPathConfig.hasPath("baseUrl") ? authrexPathConfig.getString("baseUrl") : "http://localhost:8080";
+        String jwtPubkeyPath = authrexPathConfig.hasPath("jwtPublicKeyPath") ? authrexPathConfig.getString("jwtPublicKeyPath") : "/api/auth/public-key";
+
+        String fullURI = baseURL + jwtPubkeyPath;
+
+        // Load public key from file or environment variable
+        RSAPublicKey publicKey = PublicKeyExtractor.fetchPublicKeyFromUpstream(restClientService, fullURI); // see below helper
+        RSASignatureConfiguration signatureConfig = new RSASignatureConfiguration();
+        signatureConfig.setPublicKey(publicKey);
+
+        System.out.println("public key : " + publicKey);
+
         JwtAuthenticator jwtAuthenticator = new JwtAuthenticator(signatureConfig);
+
 
         // Set custom expiration time if needed (e.g., 1 hour)
         // jwtAuthenticator.setExpirationTime(new Date(System.currentTimeMillis() + 3600000));
@@ -55,11 +72,6 @@ public class SecurityConfig {
         // Create a custom authenticator that wraps the JWT authenticator and adds claim validation
         Authenticator customAuthenticator = (ctx, credentials) -> {
             String path = ctx.webContext().getPath();
-            System.out.println("Path visited>>>>> "+path);
-            if (Arrays.asList(WHITE_LISTED_PATH).contains(path)) {
-                LOGGER.debug("Whitelisted path {}, skipping JWT validation", path);
-                return Optional.of(credentials); // short-circuit success
-            }
             TokenCredentials tokenCredentials = (TokenCredentials) credentials;
 
             try {
