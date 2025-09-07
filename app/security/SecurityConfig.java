@@ -61,7 +61,7 @@ public class SecurityConfig {
         RSASignatureConfiguration signatureConfig = new RSASignatureConfiguration();
         signatureConfig.setPublicKey(publicKey);
 
-        System.out.println("public key : " + publicKey);
+       // System.out.println("public key : " + publicKey);
 
         JwtAuthenticator jwtAuthenticator = new JwtAuthenticator(signatureConfig);
 

@@ -24,8 +24,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
+
+import static com.netra.commons.util.BasicUtil.decodeIdStringFromUrl;
 
 public class FinancialInstitutionController extends Controller {
 
@@ -84,18 +84,12 @@ public class FinancialInstitutionController extends Controller {
             return badRequest(views.html.admin.fin_ints_form.render(formData, logoed, request));
         }
 
-
-//        String logoActionStr = request.body().asFormUrlEncoded().get("logoKey_action")[0];
-//        FileUpload.FileAction logoAction = FileUpload.FileAction.fixActionTypeFromString(logoActionStr);
-
         FinancialInstitution institution = formData.get();
 
 
         if(BasicUtil.validString(logoBase64)){
              institution.setLogoKey(uploadLogo(logoBase64));
         }
-
-
 
         institution = finInstService.saveFinancialInstitution(institution);
 
@@ -108,24 +102,32 @@ public class FinancialInstitutionController extends Controller {
       return key;
     }
 
-    public Result updateOldFinInst(Long id, Http.Request request){
-
+    public Result updateOldFinInst(String hashedId, Http.Request request){
+        Long id = decodeIdStringFromUrl(hashedId);
+        //todo: load with id from db
         return ok("success");
     }
 
-    public Result viewInstitute(Long id, Http.Request request){
+    public Result viewInstitute(String hashedId, Http.Request request){
+        Long id = decodeIdStringFromUrl(hashedId);
+        //todo: load with id from db
 
         return ok(views.html.admin.fin_inst_single.render(dummyInstitution(),request));
     }
 
-    public Result editInstitute(Long id, Http.Request request){
+    public Result editInstitute(String hashedId, Http.Request request){
+        Long id = decodeIdStringFromUrl(hashedId);
+        //todo: load with id from db
+
         FinancialInstitution dummy = dummyInstitution();
         Form<FinancialInstitution> formData = institutionForm.fill(dummy);
         BasicUtil.encodeUrlBoundId(id);//todo: use to decode and encode url bound id
         return ok(views.html.admin.fin_ints_form.render(formData, dummy, request));
     }
 
-    public Result deleteInstitute(Long id, Http.Request request){
+    public Result deleteInstitute(String hashedId, Http.Request request){
+        Long id = decodeIdStringFromUrl(hashedId);
+        //todo: load with id from db
 
         FinancialInstitution dummy = dummyInstitution();
         Form<FinancialInstitution> formData = institutionForm.fill(dummy);
@@ -152,6 +154,8 @@ public class FinancialInstitutionController extends Controller {
         institution.setDomainCode("fbn");
         institution.setCreatedAt(LocalDateTime.now());
         institution.setEndpointConfig(new EndpointConfig());
+
+        institution.setLogoKey("logos/b6c2dd13-6c8d-4dc2-9d5e-eac83669d83d.png");
 
         return institution;
     }

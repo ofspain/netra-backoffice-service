@@ -16,15 +16,15 @@ GET     /auth/logout                controllers.AuthController.logout(request: R
 #GET     /files-signed              controllers.FilesController.s3Signed(key: String)
 GET     /files-s3-thumbnail        controllers.FilesController.s3Thumb(key: String)
 
-GET     /fin-insts                 controllers.admin.FinancialInstitutionController.index(page: Integer, request: Request)
-GET     /create-new-fin-inst       controllers.admin.FinancialInstitutionController.createNewFinInst(request: Request)
-GET     /view-fin-inst             controllers.admin.FinancialInstitutionController.viewInstitute(id: Long, request: Request)
-GET     /edit-fin-inst             controllers.admin.FinancialInstitutionController.editInstitute(id: Long, request: Request)
-GET     /delete-fin-inst           controllers.admin.FinancialInstitutionController.deleteInstitute(id: Long, request: Request)
+GET     /fin-insts                      controllers.admin.FinancialInstitutionController.index(page: Integer, request: Request)
+GET     /fin-insts/create               controllers.admin.FinancialInstitutionController.createNewFinInst(request: Request)
+GET     /fin-insts/view/:hashedId       controllers.admin.FinancialInstitutionController.viewInstitute(hashedId: String, request: Request)
+GET     /fin-insts/edit/:hashedId       controllers.admin.FinancialInstitutionController.editInstitute(hashedId: String, request: Request)
+GET     /fin-insts/delete/:hashedId     controllers.admin.FinancialInstitutionController.deleteInstitute(hashedId: String, request: Request)
 
 
-POST     /save-new-fin-inst       controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
-POST     /update-old-fin-inst     controllers.admin.FinancialInstitutionController.updateOldFinInst(id: Long, request: Request)
+POST     /save-new-fin-inst              controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
+POST     /fin-insts/update/:hashedId     controllers.admin.FinancialInstitutionController.updateOldFinInst(hashedId: String, request: Request)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

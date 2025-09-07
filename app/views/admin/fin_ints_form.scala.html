@@ -2,13 +2,11 @@
 @import com.netra.commons.models.FinancialInstitution
 @import com.netra.commons.models.EndpointConfig.AuthType
 @import com.netra.commons.models.EndpointConfig.HTTPMethod
-
 @import controllers.admin.routes
 @import utilities.FileUtils
-
 @import views.html.utils
-
 @import scala.collection.immutable.Map
+@import com.netra.commons.util.BasicUtil.encodeUrlBoundId
 
 @(fiForm: Form[FinancialInstitution], fi: FinancialInstitution)(implicit req: play.mvc.Http.Request)
 
@@ -18,7 +16,7 @@
 
 @action = @{
     if(isEdit){
-        routes.FinancialInstitutionController.updateOldFinInst(fi.getId)
+        routes.FinancialInstitutionController.updateOldFinInst(encodeUrlBoundId(fi.getId))
     }else{
         routes.FinancialInstitutionController.saveNewFinInst()
     }

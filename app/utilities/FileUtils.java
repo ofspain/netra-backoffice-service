@@ -9,7 +9,17 @@ public class FileUtils {
         if (base64 == null || base64.isEmpty()) {
             return new byte[0];
         }
-        return Base64.getDecoder().decode(base64);
+
+        // Handle data URI format: data:[mime];base64,xxxxx
+        if (base64.startsWith("data:")) {
+            int commaIndex = base64.indexOf(",");
+            if (commaIndex >= 0) {
+                base64 = base64.substring(commaIndex + 1);
+            }
+        }
+
+        // Decode, allowing for possible newlines/spaces in base64
+        return Base64.getMimeDecoder().decode(base64.trim());
     }
 
     public static String detectMimeType(byte[] data) {

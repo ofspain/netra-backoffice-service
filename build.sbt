@@ -40,7 +40,8 @@ libraryDependencies ++= Seq(
   "org.pac4j" %% "play-pac4j" % "13.0.0-PLAY3.0",
   "org.pac4j" % "pac4j-http" % pac4jVersion,
   "org.pac4j" % "pac4j-jwt"  % pac4jVersion,
-  "com.typesafe.play" %% "play-ahc-ws" % "2.9.6"
+  "com.typesafe.play" %% "play-ahc-ws" % "2.9.6",
+  "net.coobird" % "thumbnailator" % "0.4.20"
 
 
 //  "org.hibernate.validator" % "hibernate-validator" % "6.2.5.Final",

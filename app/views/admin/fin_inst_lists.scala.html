@@ -2,6 +2,7 @@
 @import controllers.admin.routes
 @import controllers.routes.FilesController
 @import scalas.utils.StaticAssets
+@import com.netra.commons.util.BasicUtil.encodeUrlBoundId
 @(fis: java.util.List[FinancialInstitution], page: Int, pageCount: Int)(implicit req: play.mvc.Http.Request)
 
 @views.html.admin.layout("Financial Institutions", Html(""), scripts, req) {
@@ -38,13 +39,13 @@
 
                         <div class="mt-auto d-flex justify-content-start gap-2">
                             <div class="btn-group">
-                                <a class="btn btn-sm btn-outline-secondary" href="@routes.FinancialInstitutionController.viewInstitute(fi.getId())">
+                                <a class="btn btn-sm btn-outline-secondary" href="@routes.FinancialInstitutionController.viewInstitute(encodeUrlBoundId(fi.getId()))">
                                     <i class="fa fa-eye"></i>
                                 </a>
-                                <a class="btn btn-sm btn-outline-primary" href="@routes.FinancialInstitutionController.editInstitute(fi.getId())">
+                                <a class="btn btn-sm btn-outline-primary" href="@routes.FinancialInstitutionController.editInstitute(encodeUrlBoundId(fi.getId()))">
                                     <i class="fa fa-pen"></i>
                                 </a>
-                                <a class="btn btn-sm btn-outline-danger confirm2" href="@routes.FinancialInstitutionController.deleteInstitute(fi.getId())">
+                                <a class="btn btn-sm btn-outline-danger confirm2" href="@routes.FinancialInstitutionController.deleteInstitute(encodeUrlBoundId(fi.getId()))">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </div>
