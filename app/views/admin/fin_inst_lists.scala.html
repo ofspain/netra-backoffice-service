@@ -3,7 +3,13 @@
 @import controllers.routes.FilesController
 @import scalas.utils.StaticAssets
 @import com.netra.commons.util.BasicUtil.encodeUrlBoundId
-@(fis: java.util.List[FinancialInstitution], page: Int, pageCount: Int)(implicit req: play.mvc.Http.Request)
+@(fis: java.util.List[FinancialInstitution], metadata: java.util.Map[String, Object])(implicit req: play.mvc.Http.Request)
+
+@page = @{metadata.get("page").asInstanceOf[Integer]}
+@sortDirection = @{metadata.get("sort_direction").asInstanceOf[String]}
+@limit = @{metadata.get("limit").asInstanceOf[Integer]}
+@sortBy = @{metadata.get("sort_by").asInstanceOf[String]}
+@pageCount = @{metadata.get("page_count").asInstanceOf[Integer]}
 
 @views.html.admin.layout("Financial Institutions", Html(""), scripts, req) {
     <div class="col-12">
@@ -13,6 +19,42 @@
                 <i class="fa fa-plus me-1"></i> New Institution
             </a>
         </div>
+
+            <!-- Filter/Search Form -->
+        <form method="get" action="@routes.FinancialInstitutionController.index()" class="mb-3"  onsubmit="this.page.value=1;">
+            <div class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label">Limit</label>
+                    <input type="number" class="form-control" name="limit" value="@limit" min="1" step="1">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" name="sort">
+                        <option value="created_at" @if(sortBy=="created_at"){"selected"}>Created At</option>
+                        <option value="name" @if(sortBy=="name"){"selected"}>Name</option>
+                        <option value="code" @if(sortBy=="code"){"selected"}>Code</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">Direction</label>
+                    <select class="form-select" name="sort_direction">
+                        <option value="ASC" @if(sortDirection=="ASC"){"selected"}>Ascending</option>
+                        <option value="DESC" @if(sortDirection=="DESC"){"selected"}>Descending</option>
+                    </select>
+                </div>
+                <div class="col-auto d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-search"></i> Apply
+                    </button>
+                    <a href="@routes.FinancialInstitutionController.index()" class="btn btn-secondary">
+                        <i class="fa fa-undo"></i> Reset
+                    </a>
+                </div>
+            </div>
+            <input type="hidden" name="page" value="1">
+        </form>
+
+
 
         <div class="row g-3">
         @for(fi <- fis.asScala) {
@@ -58,21 +100,69 @@
 
 
         <!-- Pagination -->
+            <!-- Filter/Search Form -->
+        <form method="get" action="@routes.FinancialInstitutionController.index()" class="mb-3">
+            <div class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label">Limit</label>
+                    <input type="number" class="form-control" name="limit" value="@limit" min="1" step="1">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">Sort By</label>
+                    <select class="form-select" name="sort">
+                        <option value="created_at" @if(sortBy=="created_at"){"selected"}>Created At</option>
+                        <option value="name" @if(sortBy=="name"){"selected"}>Name</option>
+                        <option value="code" @if(sortBy=="code"){"selected"}>Code</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <label class="form-label">Direction</label>
+                    <select class="form-select" name="sort_direction">
+                        <option value="ASC" @if(sortDirection=="ASC"){"selected"}>Ascending</option>
+                        <option value="DESC" @if(sortDirection=="DESC"){"selected"}>Descending</option>
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-search"></i> Apply
+                    </button>
+                </div>
+            </div>
+            <input type="hidden" name="page" value="@page"> <!-- keep current page -->
+        </form>
+
+
+            <!-- Pagination -->
         <nav class="mt-4" aria-label="Pagination">
             <ul class="pagination justify-content-center mb-0">
+                    <!-- Prev -->
                 <li class="page-item @if(page<=1){disabled}">
-                    <a class="page-link" href="@routes.FinancialInstitutionController.index(Math.max(1, page-1))" tabindex="-1">Prev</a>
+                    <a class="page-link"
+                        href="@routes.FinancialInstitutionController.index()?page=@{Math.max(1, page-1)}&limit=@limit&sort=@sortBy&sort_direction=@sortDirection">
+                        Prev
+                    </a>
                 </li>
+
+                    <!-- Page numbers -->
                 @for(p <- 1 to pageCount) {
                     <li class="page-item @if(p==page){active}">
-                        <a class="page-link" href="@routes.FinancialInstitutionController.index(p)">@p</a>
+                        <a class="page-link"
+                            href="@routes.FinancialInstitutionController.index()?page=@p&limit=@limit&sort=@sortBy&sort_direction=@sortDirection">
+                            @p
+                        </a>
                     </li>
                 }
+
+                    <!-- Next -->
                 <li class="page-item @if(page>=pageCount){disabled}">
-                    <a class="page-link" href="@routes.FinancialInstitutionController.index(Math.min(pageCount, page+1))">Next</a>
+                    <a class="page-link"
+                    href="@routes.FinancialInstitutionController.index()?page=@{Math.min(pageCount, page+1)}&limit=@limit&sort=@sortBy&sort_direction=@sortDirection">
+                        Next
+                    </a>
                 </li>
             </ul>
         </nav>
+
     </div>
 }
 

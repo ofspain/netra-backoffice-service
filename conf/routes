@@ -16,7 +16,7 @@ GET     /auth/logout                controllers.AuthController.logout(request: R
 #GET     /files-signed              controllers.FilesController.s3Signed(key: String)
 GET     /files-s3-thumbnail        controllers.FilesController.s3Thumb(key: String)
 
-GET     /fin-insts                      controllers.admin.FinancialInstitutionController.index(page: Integer, request: Request)
+GET     /fin-insts                      controllers.admin.FinancialInstitutionController.index(request: Request)
 GET     /fin-insts/create               controllers.admin.FinancialInstitutionController.createNewFinInst(request: Request)
 GET     /fin-insts/view/:hashedId       controllers.admin.FinancialInstitutionController.viewInstitute(hashedId: String, request: Request)
 GET     /fin-insts/edit/:hashedId       controllers.admin.FinancialInstitutionController.editInstitute(hashedId: String, request: Request)

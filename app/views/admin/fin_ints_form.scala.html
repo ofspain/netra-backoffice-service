@@ -134,11 +134,6 @@
                                 extraCss =  "auth-type d-none col-md-4"
                             )
 
-                            <div class="col-12">
-                                <label class="form-label">Request Body Template (JSON or text)</label>
-                                <textarea name="endpointConfig.requestBodyTemplate" class="form-control" rows="4" placeholder="{ }"></textarea>
-                            </div>
-
                             @utils.field_text(
                                 field      = fiForm("endpointConfig.requestBodyTemplate"),
                                 label      = "Request Body Template (JSON or text)",
@@ -291,7 +286,7 @@
                             <div class="col-12">
                                 <h6 class="mb-2">Fallback Config</h6>
                             </div>
- @*
+
                             @utils.field_select_dropdown(
                                 fiForm("endpointConfig.fallbackConfig.type"),
                                 "Type",
@@ -299,9 +294,33 @@
                                 options = Map("" -> "None", "STATIC_RESPONSE" -> "STATIC_RESPONSE", "REDIRECT_ENDPOINT" -> "REDIRECT_ENDPOINT", "EXCEPTION" -> "EXCEPTION"),
                                 attributes = Map("id" -> "fallbackTypeSelect")
                             )
+                            @*
                             @utils.field_text(fiForm("endpointConfig.fallbackConfig.value"), "Value (JSON map)", "12", inputType="textarea",
                                 attributes = Map("rows" -> "3", "placeholder" -> """{"code":"FALLBACK","message":"..."}"""))
-                            *@
+*@
+
+                            <div class="col-12 fallback-value d-none" id="fallbackValueContainer">
+                                    <!-- STATIC_RESPONSE -->
+                                <div class="fallback-static d-none">
+                                    <label class="form-label">Static Response (JSON)</label>
+                                    <textarea name="static.response.value" class="form-control"
+                                    rows="3" placeholder='{"code":"FALLBACK","message":"Service unavailable"}'></textarea>
+                                </div>
+
+                                    <!-- REDIRECT_ENDPOINT -->
+                                <div class="fallback-redirect d-none">
+                                    <label class="form-label">Redirect to Endpoint</label>
+                                    <input name="redirect.url.value" class="form-control" placeholder="Redirect Endpoint">
+                                </div>
+
+                                    <!-- EXCEPTION -->
+                                <div class="fallback-exception d-none">
+                                    <label class="form-label">Fallback Exception Message</label>
+                                    <input name="exception.message.value" class="form-control" placeholder="Exception Message">
+                                    <small class="text-muted mb-0">On failure, this endpoint will throw an exception.</small>
+                                </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
@@ -359,12 +378,33 @@
 
             // Fallback value visibility
             const fallbackSelect = document.getElementById('fallbackTypeSelect');
-            const fallbackValue = document.querySelector('.fallback-value');
+            const fallbackContainer = document.getElementById('fallbackValueContainer');
+
             if (fallbackSelect) {
-                const toggleFallback = () => fallbackValue.classList.toggle('d-none', !fallbackSelect.value);
+                const toggleFallback = () => {
+                    // Hide all value sections
+                    fallbackContainer.querySelectorAll('.fallback-static, .fallback-redirect, .fallback-exception')
+                            .forEach(el => el.classList.add('d-none'));
+
+                    if (!fallbackSelect.value) {
+                        fallbackContainer.classList.add('d-none');
+                        return;
+                    }
+
+                    fallbackContainer.classList.remove('d-none');
+                    if (fallbackSelect.value === 'STATIC_RESPONSE') {
+                        fallbackContainer.querySelector('.fallback-static').classList.remove('d-none');
+                    } else if (fallbackSelect.value === 'REDIRECT_ENDPOINT') {
+                        fallbackContainer.querySelector('.fallback-redirect').classList.remove('d-none');
+                    } else if (fallbackSelect.value === 'EXCEPTION') {
+                        fallbackContainer.querySelector('.fallback-exception').classList.remove('d-none');
+                    }
+                };
+
                 fallbackSelect.addEventListener('change', toggleFallback);
                 toggleFallback();
             }
+
 
             // Add header rows
             function wireAddHeader(btn) {

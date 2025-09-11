@@ -1,10 +1,10 @@
 package controllers.admin;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netra.commons.enums.DomainType;
 import com.netra.commons.models.EndpointConfig;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
+import org.apache.commons.lang3.StringUtils;
 import play.data.Form;
 import play.data.FormFactory;
 import play.data.validation.ValidationError;
@@ -14,10 +14,12 @@ import play.mvc.Result;
 import services.FinancialInstitutionService;
 import services.S3Service;
 import utilities.FormDataValidators;
+import utilities.PaginatedResult;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 
 import static com.netra.commons.util.BasicUtil.decodeIdStringFromUrl;
@@ -94,7 +96,13 @@ public class FinancialInstitutionController extends Controller {
              institution.setLogoKey(uploadLogo(logoBase64));
         }
 
-        institution = finInstService.saveFinancialInstitution(institution);
+        //todo: clean up exception handling here
+        try {
+            institution = finInstService.saveFinancialInstitutionWithEndpoint(institution).toCompletableFuture().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
         return ok(views.html.admin.fin_inst_single.render(institution,request));
     }
@@ -107,44 +115,92 @@ public class FinancialInstitutionController extends Controller {
 
     public Result updateOldFinInst(String hashedId, Http.Request request){
         Long id = decodeIdStringFromUrl(hashedId);
-        //todo: load with id from db
-        return ok("success");
+
+        //todo: implement this guy
+        return ok("");
     }
 
     public Result viewInstitute(String hashedId, Http.Request request){
         Long id = decodeIdStringFromUrl(hashedId);
-        //todo: load with id from db
 
-        return ok(views.html.admin.fin_inst_single.render(dummyInstitution(),request));
+        //todo: clean up exception handling here
+        try {
+            FinancialInstitution institution = finInstService.findById(id).toCompletableFuture().get();
+            return ok(views.html.admin.fin_inst_single.render(institution,request));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
     }
 
     public Result editInstitute(String hashedId, Http.Request request){
         Long id = decodeIdStringFromUrl(hashedId);
-        //todo: load with id from db
 
-        FinancialInstitution dummy = dummyInstitution();
-        Form<FinancialInstitution> formData = institutionForm.fill(dummy);
-        BasicUtil.encodeUrlBoundId(id);//todo: use to decode and encode url bound id
-        return ok(views.html.admin.fin_ints_form.render(formData, dummy, request));
+        //todo: clean up exception handling here
+        try {
+            FinancialInstitution institution = finInstService.findById(id).toCompletableFuture().get();
+            Form<FinancialInstitution> formData = institutionForm.fill(institution);
+            return ok(views.html.admin.fin_ints_form.render(formData, institution, request));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
     }
 
     public Result deleteInstitute(String hashedId, Http.Request request){
         Long id = decodeIdStringFromUrl(hashedId);
-        //todo: load with id from db
+        //todo: complete the implementation
 
-        FinancialInstitution dummy = dummyInstitution();
-        Form<FinancialInstitution> formData = institutionForm.fill(dummy);
-        return ok(views.html.admin.fin_ints_form.render(formData, dummy, request));
+        FinancialInstitution institution = null;
+        try {
+            institution = finInstService.findById(id).toCompletableFuture().get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        Form<FinancialInstitution> formData = institutionForm.fill(institution);
+        return ok(views.html.admin.fin_ints_form.render(formData, institution, request));
     }
 
 
-    public Result index(Integer page, Http.Request request){
-        List<FinancialInstitution> dummies = new ArrayList<>();
-
-        for(int i=0; i<20; i++){
-            dummies.add(dummyInstitution());
+    public Result index(Http.Request request){
+        String pageStr = request.queryString("page").orElse("1");
+        int page = 1;
+        if(StringUtils.isNumeric(pageStr)){
+            page = Integer.parseInt(pageStr);
         }
-        return ok(views.html.admin.fin_inst_lists.render(dummies, 2, 100, request));
+        String limitStr = request.queryString("limit").orElse("20");
+        int limit = 1;
+        if(StringUtils.isNumeric(limitStr)){
+            limit = Integer.parseInt(limitStr);
+        }
+
+
+        String sortBy = request.queryString("sort").orElse("created_at");
+        String direction = request.queryString("sort_direction").orElse("DESC");
+
+
+        try {
+            PaginatedResult<FinancialInstitution> paginatedResult = finInstService
+                    .findAll(limit, page, sortBy, direction).toCompletableFuture().get();
+
+            List<FinancialInstitution> listed = paginatedResult.getItems();
+            Map<String,Object> metaData = new HashMap<>();
+            metaData.put("sort_direction", direction);
+            metaData.put("page", page);
+            metaData.put("limit", limit);
+            metaData.put("sort_by", sortBy);
+            metaData.put("page_count", paginatedResult.getTotalPages());
+            return ok(views.html.admin.fin_inst_lists.render(listed, metaData, request));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
     }
 
 

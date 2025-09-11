@@ -1,11 +1,14 @@
 package utilities;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netra.commons.enums.DomainType;
 import com.netra.commons.models.EndpointConfig;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
 import play.data.Form;
 import services.FinancialInstitutionService;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +65,7 @@ public class FormDataValidators {
         return baseKey + "." + fieldName;
     }
 
-    public static Map<String, String> validateEndpointConfig(EndpointConfig config, String basePrefix) {
+    public static Map<String, String> validateEndpointConfig(EndpointConfig config, String basePrefix, Map<EndpointConfig.FallbackType, String> fallbackValues) {
         Map<String, String> errors = new HashMap<>();
 
         if (config == null) {
@@ -115,6 +118,58 @@ public class FormDataValidators {
             }
             if (multiple != null) {
                 errors.putAll(validateEndpointDetail(multiple, keyConcatenate(basePrefix, "multipleTransaction")));
+            }
+        }
+
+
+        EndpointConfig.FallbackConfig fb = config.getFallbackConfig();
+        if (fb != null && fb.getType() != null) {
+            switch (fb.getType()) {
+                case STATIC_RESPONSE:
+                    String val = fallbackValues.get(EndpointConfig.FallbackType.STATIC_RESPONSE);
+                    if (!BasicUtil.validString(val)) {
+                        errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Static response JSON cannot be empty");
+
+                    } else {
+                        try {
+                            new ObjectMapper().readTree(val); // check if valid JSON
+                            config.getFallbackConfig().setValue(val);
+                            config.getFallbackConfig().setType(EndpointConfig.FallbackType.STATIC_RESPONSE);
+                        } catch (Exception e) {
+                            errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Static response must be valid JSON");
+                        }
+                    }
+                    break;
+
+                case REDIRECT_ENDPOINT:
+                    String endpoint = fallbackValues.get(EndpointConfig.FallbackType.REDIRECT_ENDPOINT);
+                    if (!BasicUtil.validString(endpoint)) {
+                        errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Redirect endpoint URL must be specified");
+                    } else {
+                        try {
+                            new java.net.URL(endpoint); // validate if it's a well-formed URL
+                        } catch (Exception e) {
+                            errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Redirect endpoint must be a valid URL");
+                        }
+                        config.getFallbackConfig().setValue(endpoint);
+                        config.getFallbackConfig().setType(EndpointConfig.FallbackType.REDIRECT_ENDPOINT);
+                    }
+                    break;
+
+                case EXCEPTION:
+                    String exceptionMsg = fallbackValues.get(EndpointConfig.FallbackType.EXCEPTION);
+                    if(!BasicUtil.validString(exceptionMsg)){
+                        errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Exception message is required");
+
+                    }else{
+                        config.getFallbackConfig().setValue(exceptionMsg);
+                        config.getFallbackConfig().setType(EndpointConfig.FallbackType.EXCEPTION);
+                    }
+                    break;
+
+                default:
+                    errors.put(keyConcatenate(basePrefix, "fallbackConfig.type"), "Unknown fallback type");
+
             }
         }
 
