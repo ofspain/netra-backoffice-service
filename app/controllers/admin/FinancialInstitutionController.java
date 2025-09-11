@@ -1,10 +1,10 @@
 package controllers.admin;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netra.commons.enums.DomainType;
 import com.netra.commons.models.EndpointConfig;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
-import play.data.DynamicForm;
 import play.data.Form;
 import play.data.FormFactory;
 import play.data.validation.ValidationError;
@@ -13,16 +13,11 @@ import play.mvc.Http;
 import play.mvc.Result;
 import services.FinancialInstitutionService;
 import services.S3Service;
-import services.db.JdbcWrapper;
 import utilities.FormDataValidators;
-import utilities.dto.EntityWithUpload;
-import utilities.dto.FileUpload;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 import static com.netra.commons.util.BasicUtil.decodeIdStringFromUrl;
@@ -66,7 +61,15 @@ public class FinancialInstitutionController extends Controller {
         endpointConfig.setDomainType(DomainType.FINANCIAL_INSTITUTION);
         endpointConfig.setDomainCode(formData.get().getDomainCode());
 
-        Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig");
+        String endpointFallbackStaticResponse = raw.get("static.response.value");
+        String endpointFallbackRedirectUrl = raw.get("redirect.url.value");
+        String endpointFallbackException = raw.get("exception.message.value");
+        Map<EndpointConfig.FallbackType, String> fallbackTypeValues = new HashMap<>();
+        fallbackTypeValues.put(EndpointConfig.FallbackType.STATIC_RESPONSE, endpointFallbackStaticResponse);
+        fallbackTypeValues.put(EndpointConfig.FallbackType.REDIRECT_ENDPOINT, endpointFallbackRedirectUrl);
+        fallbackTypeValues.put(EndpointConfig.FallbackType.EXCEPTION, endpointFallbackException);
+
+        Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig", fallbackTypeValues);
 
         for (Map.Entry<String, String> entry : endpointErrors.entrySet()) {
             formData = formData.withError(entry.getKey(), entry.getValue());
@@ -159,4 +162,5 @@ public class FinancialInstitutionController extends Controller {
 
         return institution;
     }
+
 }

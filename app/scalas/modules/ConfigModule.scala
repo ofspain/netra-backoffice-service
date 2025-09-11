@@ -4,7 +4,7 @@ import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 import scalas.services.FlywayInitializer
 import security.{Secured, SecurityConfig, UserContext}
-import services.{FinancialInstitutionService, S3Service}
+import services.{EndpointConfigService, FinancialInstitutionService, S3Service}
 import services.db.JdbcWrapper
 import org.pac4j.core.config.Config
 import utilities.rest.{RestClientConfig, RestClientService}
@@ -19,6 +19,7 @@ class ConfigModule extends Module {
       bind[JdbcWrapper].toSelf.eagerly(),
       bind[S3Service].toSelf.eagerly(),
       bind[FinancialInstitutionService].toSelf,
+      bind[EndpointConfigService].toSelf,
 
       //rest utils
       bind[RestClientConfig].toSelf.eagerly(),
