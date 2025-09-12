@@ -38,7 +38,9 @@ CREATE OR REPLACE FUNCTION upsert_endpoint_config(
     operation_type VARCHAR(10)
 ) AS $$
 DECLARE
-v_op VARCHAR(10);
+    v_op VARCHAR(10);
+    detail_json JSONB;
+    field_name TEXT;
 BEGIN
     ----------------------------------------------------------------------
     -- BASIC VALIDATION
