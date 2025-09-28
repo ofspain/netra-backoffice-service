@@ -1,9 +1,10 @@
 package services;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.netra.commons.database.EnhancedBeanPropertyRowMapper;
 import com.netra.commons.exceptions.AppDataAccessException;
-import com.netra.commons.models.EndpointConfig;
+import com.netra.commons.models.endpoint.EndpointConfig;
 import com.netra.commons.models.FinancialInstitution;
 import services.db.ResultSetToBeanMapper;
 import services.db.JdbcWrapper;
@@ -15,6 +16,8 @@ import java.sql.SQLException;
 import java.sql.ResultSet;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import static utilities.MapperUtil.toJsonb;
 
 
 @Singleton
@@ -89,12 +92,12 @@ public class FinancialInstitutionService {
     // Find single by ID
     public CompletionStage<FinancialInstitution> findById(Long id) {
 
-        return jdbcClient.call("find_financial_institution_by_id")
+        return jdbcClient.call("get_financial_institution_with_endpoint")
                 .param(id)
                 .queryAsync(rs -> {
                     try {
                         if (rs.next()) {
-                            return ResultSetToBeanMapper.mapToFinancialInstitution(rs);
+                            return ResultSetToBeanMapper.mapToFinancialInstitutionWithEndpoint(rs);
                         }
                     } catch (SQLException e) {
                         e.printStackTrace();
@@ -123,10 +126,17 @@ public class FinancialInstitutionService {
             try {
                 // Upsert endpoint config - return the input object if no result set
                 EndpointConfig savedEndpoint = jdbcClient.call("upsert_endpoint_config", connection)
-                        .param(endpointConfig.getId())
-                        .param(endpointConfig.getDomainCode())
-                        .param(endpointConfig.getDomainType().toString())
-                        //todo ... other endpoint params
+                        .param(endpointConfig.getId() == null ? null : endpointConfig.getId()) // BIGINT
+                        .param(endpointConfig.getDomainOwnerId())                                 // VARCHAR
+                        .param(endpointConfig.getDomainOwnerType().toString())                      // VARCHAR
+                        .param(endpointConfig.getDomainOwnerCode())                                 // VARCHAR
+                        .param(endpointConfig.getDescription())                                // TEXT
+                        .param(toJsonb(endpointConfig.getNetwork()))                             // JSONB
+                        .param(toJsonb(endpointConfig.getSecurity()))                             // JSONB
+                        .param(toJsonb(endpointConfig.getEndpoints()))                             // JSONB
+                        .param(toJsonb(endpointConfig.getResilience()))                             // JSONB
+                        .param(toJsonb(endpointConfig.getMetadata()))                             // JSONB
+
                         .execute(rs -> {
                             try {
                                 if (rs.next()) {
@@ -167,7 +177,9 @@ public class FinancialInstitutionService {
                 return savedFI;
 
             } catch (SQLException e) {
-                throw new AppDataAccessException("Transaction failed", e);
+                throw new AppDataAccessException("Transaction failed while processing a db action", e);
+            }catch (JsonProcessingException ex){
+                throw new AppDataAccessException("Transaction failed while wrapping value to json string", ex);
             }
         });
     }
@@ -184,11 +196,17 @@ public class FinancialInstitutionService {
                     try {
                         // 1. Upsert endpoint config
                         EndpointConfig savedEndpoint = jdbcClient.call("upsert_endpoint_config", connection)
-                                .param(endpointConfig.getId())
-                                .param(endpointConfig.getDomainCode())
-                                .param(endpointConfig.getDomainType().toString())
-                                // ... other endpoint params
-                                .execute(rs -> {
+                                .param(endpointConfig.getId() == null ? null : endpointConfig.getId()) // BIGINT
+                                .param(endpointConfig.getDomainOwnerId())                                 // VARCHAR
+                                .param(endpointConfig.getDomainOwnerType().toString())                      // VARCHAR
+                                .param(endpointConfig.getDomainOwnerCode())                                 // VARCHAR
+                                .param(endpointConfig.getDescription())                                // TEXT
+                                .param(toJsonb(endpointConfig.getNetwork()))                             // JSONB
+                                .param(toJsonb(endpointConfig.getSecurity()))                             // JSONB
+                                .param(toJsonb(endpointConfig.getEndpoints()))                             // JSONB
+                                .param(toJsonb(endpointConfig.getResilience()))                             // JSONB
+                                .param(toJsonb(endpointConfig.getMetadata()))                             // JSONB
+                         .execute(rs -> {
                                     try {
                                         if (rs.next()) {
                                             return ResultSetToBeanMapper.mapResultSetToEndpointConfig(rs);
@@ -230,6 +248,9 @@ public class FinancialInstitutionService {
                     } catch (SQLException e) {
                         e.printStackTrace();
                         throw new AppDataAccessException("Transaction failed", e);
+                    }catch (JsonProcessingException ex){
+                        ex.printStackTrace();
+                        throw new AppDataAccessException("Error updating while converting values to json",ex);
                     }
                 },
                 ex -> ex instanceof SQLException      // rollback on SQL problems

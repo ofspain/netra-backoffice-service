@@ -1,9 +1,10 @@
 package controllers.admin;
 
 import com.netra.commons.enums.DomainType;
-import com.netra.commons.models.EndpointConfig;
+import com.netra.commons.models.endpoint.*;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
+import dtos.DomainIdentity;
 import org.apache.commons.lang3.StringUtils;
 import play.data.Form;
 import play.data.FormFactory;
@@ -23,6 +24,7 @@ import java.util.concurrent.ExecutionException;
 
 
 import static com.netra.commons.util.BasicUtil.decodeIdStringFromUrl;
+import static com.netra.commons.util.BasicUtil.encodeUrlBoundId;
 
 public class FinancialInstitutionController extends Controller {
 
@@ -60,16 +62,16 @@ public class FinancialInstitutionController extends Controller {
 
 
         EndpointConfig endpointConfig = formData.get().getEndpointConfig();
-        endpointConfig.setDomainType(DomainType.FINANCIAL_INSTITUTION);
-        endpointConfig.setDomainCode(formData.get().getDomainCode());
+        endpointConfig.setDomainOwnerType(DomainType.FINANCIAL_INSTITUTION);
+        endpointConfig.setDomainOwnerCode(formData.get().getDomainCode());
 
         String endpointFallbackStaticResponse = raw.get("static.response.value");
         String endpointFallbackRedirectUrl = raw.get("redirect.url.value");
         String endpointFallbackException = raw.get("exception.message.value");
-        Map<EndpointConfig.FallbackType, String> fallbackTypeValues = new HashMap<>();
-        fallbackTypeValues.put(EndpointConfig.FallbackType.STATIC_RESPONSE, endpointFallbackStaticResponse);
-        fallbackTypeValues.put(EndpointConfig.FallbackType.REDIRECT_ENDPOINT, endpointFallbackRedirectUrl);
-        fallbackTypeValues.put(EndpointConfig.FallbackType.EXCEPTION, endpointFallbackException);
+        Map<FallbackConfig.FallbackType, String> fallbackTypeValues = new HashMap<>();
+        fallbackTypeValues.put(FallbackConfig.FallbackType.STATIC_RESPONSE, endpointFallbackStaticResponse);
+        fallbackTypeValues.put(FallbackConfig.FallbackType.REDIRECT_ENDPOINT, endpointFallbackRedirectUrl);
+        fallbackTypeValues.put(FallbackConfig.FallbackType.EXCEPTION, endpointFallbackException);
 
         Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig", fallbackTypeValues);
 
@@ -104,8 +106,99 @@ public class FinancialInstitutionController extends Controller {
             throw new RuntimeException(e);
         }
 
-        return ok(views.html.admin.fin_inst_single.render(institution,request));
+        return redirect(routes.FinancialInstitutionController.viewInstitute(encodeUrlBoundId(institution.getId()))); //ok(views.html.admin.fin_inst_single_BK.render(institution,request));
     }
+
+
+    public Result saveAndRedirectToConfig(Http.Request request) {
+
+        Form<FinancialInstitution> formData = institutionForm.bindFromRequest(request);
+
+        Map<String, String> raw = formData.rawData();
+        formData = FormDataValidators.validateFinancialInstitution(formData, finInstService);
+
+        // build endpoint config defaults
+        EndpointConfig endpointConfig = formData.get().getEndpointConfig();
+        endpointConfig.setDomainOwnerType(DomainType.FINANCIAL_INSTITUTION);
+        endpointConfig.setDomainOwnerCode(formData.get().getDomainCode());
+
+        String endpointFallbackStaticResponse = raw.get("static.response.value");
+        String endpointFallbackRedirectUrl = raw.get("redirect.url.value");
+        String endpointFallbackException = raw.get("exception.message.value");
+
+        Map<FallbackConfig.FallbackType, String> fallbackTypeValues = new HashMap<>();
+        fallbackTypeValues.put(FallbackConfig.FallbackType.STATIC_RESPONSE, endpointFallbackStaticResponse);
+        fallbackTypeValues.put(FallbackConfig.FallbackType.REDIRECT_ENDPOINT, endpointFallbackRedirectUrl);
+        fallbackTypeValues.put(FallbackConfig.FallbackType.EXCEPTION, endpointFallbackException);
+
+        Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig", fallbackTypeValues);
+        for (Map.Entry<String, String> entry : endpointErrors.entrySet()) {
+            formData = formData.withError(entry.getKey(), entry.getValue());
+        }
+
+        String logoBase64 = formData.rawData().get("logo_binary");
+
+        if (formData.hasErrors()) {
+            FinancialInstitution logoed = new FinancialInstitution();
+            logoed.setLogoKey(logoBase64);
+            return badRequest(views.html.admin.fin_ints_form.render(formData, logoed, request));
+        }
+
+        FinancialInstitution institution = formData.get();
+
+        if (BasicUtil.validString(logoBase64)) {
+            institution.setLogoKey(uploadLogo(logoBase64));
+        }
+
+        try {
+            institution = finInstService.saveFinancialInstitutionWithEndpoint(institution).toCompletableFuture().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        String hashedDomainType = BasicUtil.encodeURLBoundString(DomainType.FINANCIAL_INSTITUTION.name());
+        String hashedId = encodeUrlBoundId(institution.getId());
+
+
+        // 🔑 redirect to EndpointConfig form after save
+        return redirect(routes.EndpointConfigController.showForm(hashedDomainType, hashedId));
+    }
+
+    public Result updateAndRedirectToConfig(String hashedId, Http.Request request) {
+        Long id = decodeIdStringFromUrl(hashedId);
+
+        Form<FinancialInstitution> formData = institutionForm.bindFromRequest(request);
+
+        String logoBase64 = formData.rawData().get("logo_binary");
+
+        if (formData.hasErrors()) {
+            FinancialInstitution logoed = new FinancialInstitution();
+            logoed.setLogoKey(logoBase64);
+            return badRequest(views.html.admin.fin_ints_form.render(formData, logoed, request));
+        }
+
+        FinancialInstitution institution = formData.get();
+        institution.setId(id);
+
+        if (BasicUtil.validString(logoBase64)) {
+            institution.setLogoKey(uploadLogo(logoBase64));
+        }
+
+        try {
+            institution = finInstService.saveFinancialInstitutionWithEndpoint(institution).toCompletableFuture().get();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+
+        String hashedDomainType = BasicUtil.encodeURLBoundString(DomainType.FINANCIAL_INSTITUTION.name());
+
+
+        // 🔑 redirect to EndpointConfig form after update
+        return redirect(routes.EndpointConfigController.showForm(hashedDomainType, hashedId));
+    }
+
 
     private String uploadLogo(String dataUri){
 
@@ -126,7 +219,13 @@ public class FinancialInstitutionController extends Controller {
         //todo: clean up exception handling here
         try {
             FinancialInstitution institution = finInstService.findById(id).toCompletableFuture().get();
-            return ok(views.html.admin.fin_inst_single.render(institution,request));
+
+            EndpointConfig endpointConfig = institution.getEndpointConfig();
+            DomainIdentity domainIdentity = new DomainIdentity(
+                    DomainType.FINANCIAL_INSTITUTION.name(), institution.getId(), institution.getUpdatedAt(),
+                    institution.getDomainCode(), institution.getCreatedAt()
+            );
+            return ok(views.html.admin.domain_single.render(institution,domainIdentity, endpointConfig, request));
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);

@@ -25,7 +25,7 @@ libraryDependencies ++= Seq(
   javaJdbc,
   ws,
   javaWs,
-  "org.postgresql" % "postgresql" % "42.7.7" % Runtime,
+  "org.postgresql" % "postgresql" % "42.7.7",
   "org.flywaydb" % "flyway-core" % "11.11.1",
   "org.flywaydb" % "flyway-database-postgresql" % "11.11.1" % Runtime,
   "com.netra" % "commons-netra" % "0.0.1-a"

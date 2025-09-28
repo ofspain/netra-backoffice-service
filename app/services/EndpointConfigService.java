@@ -1,7 +1,7 @@
 package services;
 
 import com.netra.commons.exceptions.AppDataAccessException;
-import com.netra.commons.models.EndpointConfig;
+import com.netra.commons.models.endpoint.EndpointConfig;
 import services.db.JdbcWrapper;
 import services.db.ResultSetToBeanMapper;
 

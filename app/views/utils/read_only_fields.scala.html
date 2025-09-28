@@ -1,0 +1,24 @@
+@(label: String,
+        value: String,
+        colSpan: String = "6",
+        fieldName: Option[String] = None, // if defined -> hidden input will be created
+        helpText: Option[String] = None)
+
+<div class="col-md-@colSpan">
+    <label class="form-label">@Html(label)</label>
+
+        <!-- Visible read-only input -->
+    <input type="text"
+    class="form-control-plaintext bg-light"
+    value="@value"
+    readonly="readonly" />
+
+        <!-- Optional hidden input to carry value in form submission -->
+    @fieldName.map { name =>
+        <input type="hidden" name="@name" value="@value" />
+    }
+
+    @helpText.map { txt =>
+        <div class="form-text" style="color: #0a58ca">@txt</div>
+    }
+</div>

@@ -2,7 +2,7 @@ package utilities;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netra.commons.enums.DomainType;
-import com.netra.commons.models.EndpointConfig;
+import com.netra.commons.models.endpoint.*;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
 import play.data.Form;
@@ -64,8 +64,11 @@ public class FormDataValidators {
     private static String keyConcatenate(String baseKey, String fieldName) {
         return baseKey + "." + fieldName;
     }
-
-    public static Map<String, String> validateEndpointConfig(EndpointConfig config, String basePrefix, Map<EndpointConfig.FallbackType, String> fallbackValues) {
+    public static Map<String, String> validateEndpointConfig(
+            EndpointConfig config,
+            String basePrefix,
+            Map<FallbackConfig.FallbackType, String> fallbackValues
+    ) {
         Map<String, String> errors = new HashMap<>();
 
         if (config == null) {
@@ -73,147 +76,137 @@ public class FormDataValidators {
             return errors;
         }
 
-        // Domain code
-        String domainCode = config.getDomainCode();
-        if (!BasicUtil.validString(domainCode)) {
-            errors.put(keyConcatenate(basePrefix, "domainCode"), "Domain code is required for endpoint");
+        // Domain checks
+        if (!BasicUtil.validString(config.getDomainOwnerCode())) {
+            errors.put(keyConcatenate(basePrefix, "domainOwnerCode"), "Domain owner code is required for endpoint");
+        }
+        if (config.getDomainOwnerType() == null) {
+            errors.put(keyConcatenate(basePrefix, "domainOwnerType"), "Domain owner type is required for endpoint");
         }
 
-        // Domain type
-        DomainType domainType = config.getDomainType();
-        if (domainType == null) {
-            errors.put(keyConcatenate(basePrefix, "domainType"), "Domain Type is required for endpoint");
+        if (config.getDomainOwnerId() == null) {
+            errors.put(keyConcatenate(basePrefix, "domainOwnerId"), "Domain owner id is required for endpoint");
         }
 
-        // Base URL
-        String baseUrl = config.getBaseUrl();
-        if (!BasicUtil.validString(baseUrl)) {
-            errors.put(keyConcatenate(basePrefix, "baseUrl"), "Base URL is compulsory for endpoint configuration");
-        }
-
-        // Timeout
-        if (config.getTimeoutMillis() <= 0) {
-            errors.put(keyConcatenate(basePrefix, "timeoutMillis"), "Timeout must be a positive number");
-        }
-
-        // Proxy
-        if (config.isUseProxy()) {
-            EndpointConfig.ProxyConfig proxy = config.getProxy();
-            if (proxy == null) {
-                errors.put(keyConcatenate(basePrefix, "proxy"), "Proxy configuration must be provided when proxy is enabled");
-            } else {
-                errors.putAll(validateProxyConfig(proxy, keyConcatenate(basePrefix, "proxy")));
-            }
-        }
-
-        // Endpoint details
-        EndpointConfig.EndpointDetail unique = config.getUniqueTransaction();
-        EndpointConfig.EndpointDetail multiple = config.getMultipleTransaction();
-
-        if (unique == null && multiple == null) {
-            errors.put(basePrefix, "At least one of uniqueTransaction or multipleTransaction must be provided");
+        // --- Network validation ---
+        NetworkConfig net = config.getNetwork();
+        if (net == null) {
+            errors.put(keyConcatenate(basePrefix, "network"), "Network configuration is required");
         } else {
-            if (unique != null) {
-                errors.putAll(validateEndpointDetail(unique, keyConcatenate(basePrefix, "uniqueTransaction")));
+            if (!BasicUtil.validString(net.getBaseUrl())) {
+                errors.put(keyConcatenate(basePrefix, "network.baseUrl"), "Base URL is compulsory for endpoint configuration");
             }
-            if (multiple != null) {
-                errors.putAll(validateEndpointDetail(multiple, keyConcatenate(basePrefix, "multipleTransaction")));
+            if (net.getTimeoutMillis() <= 0) {
+                errors.put(keyConcatenate(basePrefix, "network.timeoutMillis"), "Timeout must be a positive number");
+            }
+            if (net.isUseProxy()) {
+                if (net.getProxy() == null) {
+                    errors.put(keyConcatenate(basePrefix, "network.proxy"), "Proxy configuration must be provided when proxy is enabled");
+                } else {
+                    errors.putAll(validateProxyConfig(net.getProxy(), keyConcatenate(basePrefix, "network.proxy")));
+                }
             }
         }
 
+        // --- Endpoints validation ---
+        if (config.getEndpoints() == null || config.getEndpoints().isEmpty()) {
+            errors.put(keyConcatenate(basePrefix, "endpoints"), "At least one endpoint detail must be provided");
+        } else {
+            for (EndpointDetail endpointDetail : config.getEndpoints()) {
+                String opPrefix = keyConcatenate(basePrefix, "endpoints.");
+                errors.putAll(validateEndpointDetail(endpointDetail, opPrefix));
+            }
+        }
 
-        EndpointConfig.FallbackConfig fb = config.getFallbackConfig();
-        if (fb != null && fb.getType() != null) {
-            switch (fb.getType()) {
-                case STATIC_RESPONSE:
-                    String val = fallbackValues.get(EndpointConfig.FallbackType.STATIC_RESPONSE);
-                    if (!BasicUtil.validString(val)) {
-                        errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Static response JSON cannot be empty");
-
-                    } else {
-                        try {
-                            new ObjectMapper().readTree(val); // check if valid JSON
-                            config.getFallbackConfig().setValue(val);
-                            config.getFallbackConfig().setType(EndpointConfig.FallbackType.STATIC_RESPONSE);
-                        } catch (Exception e) {
-                            errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Static response must be valid JSON");
+        // --- Resilience config ---
+        ResilienceConfig resilience = config.getResilience();
+        if (resilience != null && resilience.getFallback() != null) {
+            FallbackConfig fb = resilience.getFallback();
+            if (fb.getType() != null) {
+                switch (fb.getType()) {
+                    case STATIC_RESPONSE -> {
+                        String val = fallbackValues.get(FallbackConfig.FallbackType.STATIC_RESPONSE);
+                        if (!BasicUtil.validString(val)) {
+                            errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Static response JSON cannot be empty");
+                        } else {
+                            try {
+                                new ObjectMapper().readTree(val);
+                                fb.setValue(val);
+                            } catch (Exception e) {
+                                errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Static response must be valid JSON");
+                            }
                         }
                     }
-                    break;
-
-                case REDIRECT_ENDPOINT:
-                    String endpoint = fallbackValues.get(EndpointConfig.FallbackType.REDIRECT_ENDPOINT);
-                    if (!BasicUtil.validString(endpoint)) {
-                        errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Redirect endpoint URL must be specified");
-                    } else {
-                        try {
-                            new java.net.URL(endpoint); // validate if it's a well-formed URL
-                        } catch (Exception e) {
-                            errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Redirect endpoint must be a valid URL");
+                    case REDIRECT_ENDPOINT -> {
+                        String endpoint = fallbackValues.get(FallbackConfig.FallbackType.REDIRECT_ENDPOINT);
+                        if (!BasicUtil.validString(endpoint)) {
+                            errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Redirect endpoint URL must be specified");
+                        } else {
+                            try {
+                                new java.net.URL(endpoint);
+                                fb.setValue(endpoint);
+                            } catch (Exception e) {
+                                errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Redirect endpoint must be a valid URL");
+                            }
                         }
-                        config.getFallbackConfig().setValue(endpoint);
-                        config.getFallbackConfig().setType(EndpointConfig.FallbackType.REDIRECT_ENDPOINT);
                     }
-                    break;
-
-                case EXCEPTION:
-                    String exceptionMsg = fallbackValues.get(EndpointConfig.FallbackType.EXCEPTION);
-                    if(!BasicUtil.validString(exceptionMsg)){
-                        errors.put(keyConcatenate(basePrefix, "fallbackConfig.value"), "Exception message is required");
-
-                    }else{
-                        config.getFallbackConfig().setValue(exceptionMsg);
-                        config.getFallbackConfig().setType(EndpointConfig.FallbackType.EXCEPTION);
+                    case EXCEPTION -> {
+                        String msg = fallbackValues.get(FallbackConfig.FallbackType.EXCEPTION);
+                        if (!BasicUtil.validString(msg)) {
+                            errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Exception message is required");
+                        } else {
+                            fb.setValue(msg);
+                        }
                     }
-                    break;
-
-                default:
-                    errors.put(keyConcatenate(basePrefix, "fallbackConfig.type"), "Unknown fallback type");
-
-            }
-        }
-
-        return errors;
-    }
-
-    private static Map<String, String> validateProxyConfig(EndpointConfig.ProxyConfig proxy, String basePrefix) {
-        Map<String, String> errors = new HashMap<>();
-
-        if (!BasicUtil.validString(proxy.getHost())) {
-            errors.put(keyConcatenate(basePrefix, "host"), "Proxy host must not be empty");
-        }
-
-        Integer port = proxy.getPort();
-        if (port == null || port <= 0 || port > 65535) {
-            errors.put(keyConcatenate(basePrefix, "port"), "Proxy port must be between 1 and 65535");
-        }
-
-        return errors;
-    }
-
-    private static Map<String, String> validateEndpointDetail(EndpointConfig.EndpointDetail detail, String basePrefix) {
-        Map<String, String> errors = new HashMap<>();
-
-        if (!BasicUtil.validString(detail.getUrl())) {
-            errors.put(keyConcatenate(basePrefix, "url"), "URL must not be blank");
-        }
-
-        if (detail.getMethod() == null) {
-            errors.put(keyConcatenate(basePrefix, "method"), "Method must be specified (GET or POST)");
-        }
-
-        List<EndpointConfig.EndpointHeader> headers = detail.getHeaders();
-        if (headers != null) {
-            for (int i = 0; i < headers.size(); i++) {
-                EndpointConfig.EndpointHeader header = headers.get(i);
-                if (header.getName() == null || header.getName().isBlank()) {
-                    errors.put(keyConcatenate(basePrefix, "headers[" + i + "].name"),
-                            "Header name must not be blank");
                 }
             }
         }
 
         return errors;
     }
+
+    private static Map<String, String> validateProxyConfig(ProxyConfig proxy, String basePrefix) {
+        Map<String, String> errors = new HashMap<>();
+        if (!BasicUtil.validString(proxy.getHost())) {
+            errors.put(keyConcatenate(basePrefix, "host"), "Proxy host must not be empty");
+        }
+        Integer port = proxy.getPort();
+        if (port == null || port <= 0 || port > 65535) {
+            errors.put(keyConcatenate(basePrefix, "port"), "Proxy port must be between 1 and 65535");
+        }
+        return errors;
+    }
+
+    private static Map<String, String> validateEndpointDetail(EndpointDetail detail, String basePrefix) {
+        Map<String, String> errors = new HashMap<>();
+
+        if(null == detail.getOperationType()){
+            errors.put(keyConcatenate(basePrefix, "operationType"), "Operation type must not be blank");
+        }
+        if (!BasicUtil.validString(detail.getUrl())) {
+            errors.put(keyConcatenate(basePrefix, "url"), "URL must not be blank");
+        }
+        if (detail.getMethod() == null) {
+            errors.put(keyConcatenate(basePrefix, "method"), "HTTP method must be specified (GET, POST, PUT, DELETE)");
+        }
+        if (detail.getHeaders() != null) {
+            for (int i = 0; i < detail.getHeaders().size(); i++) {
+                StaticHeader header = detail.getHeaders().get(i);
+                if (!BasicUtil.validString(header.getName())) {
+                    errors.put(keyConcatenate(basePrefix, "headers[" + i + "].name"), "Header name must not be blank");
+                }
+            }
+        }
+        if (detail.getDynamicHeaders() != null) {
+            for (int i = 0; i < detail.getDynamicHeaders().size(); i++) {
+                DynamicHeader header = detail.getDynamicHeaders().get(i);
+                if (!BasicUtil.validString(header.getName())) {
+                    errors.put(keyConcatenate(basePrefix, "dynamicHeaders[" + i + "].name"), "Dynamic header name must not be blank");
+                }
+            }
+        }
+        return errors;
+    }
+
 
 }

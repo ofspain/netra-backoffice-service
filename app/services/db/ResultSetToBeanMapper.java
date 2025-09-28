@@ -1,10 +1,12 @@
 package services.db;
 
+import com.google.common.graph.Network;
 import com.netra.commons.enums.DomainType;
 import com.netra.commons.exceptions.AppDataAccessException;
-import com.netra.commons.models.EndpointConfig;
+import com.netra.commons.models.endpoint.*;
 import com.netra.commons.models.FinancialInstitution;
 import lombok.experimental.UtilityClass;
+import utilities.MapperUtil;
 import utilities.PaginatedResult;
 
 import java.sql.ResultSet;
@@ -13,6 +15,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -56,7 +59,7 @@ public class ResultSetToBeanMapper {
     }
 
     public static FinancialInstitution mapToFinancialInstitution(ResultSet rs) {
-        return mapToFinancialInstitution(rs, "");
+        return mapToFinancialInstitution(rs, "fi_");
     }
 
     /**
@@ -87,49 +90,53 @@ public class ResultSetToBeanMapper {
         try {
             EndpointConfig config = new EndpointConfig();
 
+            // Core identifiers
             config.setId(getNullableLong(rs, prefix + "id"));
             config.setCreatedAt(getLocalDateTime(rs, prefix + "created_at"));
             config.setUpdatedAt(getLocalDateTime(rs, prefix + "updated_at"));
-            config.setDomainCode(getNullableString(rs, prefix + "domain_code"));
+            config.setDomainOwnerId(getNullableLong(rs, prefix + "domain_owner_id"));
 
-            String domainTypeStr = getNullableString(rs, prefix + "domain_type");
+            config.setDomainOwnerCode(getNullableString(rs, prefix + "domain_owner_code"));
+
+            // Domain type (enum safe parsing)
+            String domainTypeStr = getNullableString(rs, prefix + "domain_owner_type");
             if (domainTypeStr != null) {
                 try {
-                    config.setDomainType(DomainType.valueOf(domainTypeStr));
+                    config.setDomainOwnerType(DomainType.valueOf(domainTypeStr));
                 } catch (IllegalArgumentException ignored) {
-                    System.out.println("Warning: Unknown domain type: " + domainTypeStr);
+                    System.out.println("⚠️ Warning: Unknown domain type: " + domainTypeStr);
                 }
             }
 
             config.setDescription(getNullableString(rs, prefix + "description"));
-            config.setBaseUrl(getNullableString(rs, prefix + "base_url"));
-            config.setTimeoutMillis(getNullableInteger(rs, prefix + "timeout_millis", 5000));
-            config.setUseProxy(getNullableBoolean(rs, prefix + "use_proxy", false));
-            config.setRequiresAuth(getNullableBoolean(rs, prefix + "requires_auth", false));
 
-            String authTypeStr = getNullableString(rs, prefix + "auth_type");
-            if (authTypeStr != null) {
-                try {
-                    config.setAuthType(EndpointConfig.AuthType.valueOf(authTypeStr));
-                } catch (IllegalArgumentException ignored) {
-                    System.out.println("Warning: Unknown auth type: " + authTypeStr);
-                }
-            }
+            // JSONB fields → parse into typed configs
+            config.setNetwork(
+                    parseJson(getNullableString(rs, prefix + "network_config"), NetworkConfig.class)
+            );
 
-            config.setRequestBodyTemplate(getNullableString(rs, prefix + "request_body_template"));
+            config.setSecurity(
+                    parseJson(getNullableString(rs, prefix + "security_config"), SecurityConfig.class)
+            );
 
-            // JSONB fields (implement parseJson if needed)
-            // config.setProxy(parseJson(getNullableString(rs, prefix + "proxy_config"), EndpointConfig.ProxyConfig.class));
-            // config.setUniqueTransaction(parseJson(getNullableString(rs, prefix + "unique_transaction"), EndpointConfig.EndpointDetail.class));
-            // config.setMultipleTransaction(parseJson(getNullableString(rs, prefix + "multiple_transaction"), EndpointConfig.EndpointDetail.class));
-            // config.setRetryConfig(parseJson(getNullableString(rs, prefix + "retry_config"), EndpointConfig.RetryConfig.class));
-            // config.setFallbackConfig(parseJson(getNullableString(rs, prefix + "fallback_config"), EndpointConfig.FallbackConfig.class));
+            config.setEndpoints(
+                    parseJson(getNullableString(rs, prefix + "endpoints"), List.class)
+            );
+
+            config.setResilience(
+                    parseJson(getNullableString(rs, prefix + "resilience_config"), ResilienceConfig.class)
+            );
+
+            config.setMetadata(
+                    parseJson(getNullableString(rs, prefix + "metadata"), Map.class)
+            );
 
             return config;
         } catch (SQLException e) {
             throw new AppDataAccessException("Error mapping EndpointConfig", e);
         }
     }
+
 
     public static EndpointConfig mapResultSetToEndpointConfig(ResultSet rs) {
         return mapResultSetToEndpointConfig(rs, "");
@@ -188,7 +195,7 @@ public class ResultSetToBeanMapper {
                 if (totalCount == 0) {
                     totalCount = rs.getLong("total_count");
                 }
-                items.add(mapToFinancialInstitution(rs));
+                items.add(mapToFinancialInstitution(rs, ""));
             }
 
             return new PaginatedResult<>(items, totalCount, limit, offset);
@@ -267,15 +274,14 @@ public class ResultSetToBeanMapper {
     }
 
     // JSON parser hook
-    /*
+
     private static <T> T parseJson(String json, Class<T> clazz) {
         if (json == null) return null;
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(json, clazz);
+            return MapperUtil.projectObjectMapper().readValue(json, clazz);
         } catch (Exception e) {
             throw new AppDataAccessException("Failed to parse JSON", e);
         }
     }
-    */
+
 }

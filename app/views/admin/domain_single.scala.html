@@ -1,0 +1,229 @@
+@import com.netra.commons.contracts.Domain
+@import controllers.admin.routes
+@import scalas.utils.StaticAssets
+@import dtos.DomainIdentity
+@import com.netra.commons.models.endpoint.EndpointConfig
+@import controllers.admin.DomainRouterController
+@(domain: Domain, domainIdentity: DomainIdentity, endpointConfig: EndpointConfig)(implicit req: play.mvc.Http.Request)
+
+@views.html.admin.layout("Domain", Html(""), scripts, req) {
+    <div class="col-12">
+            <!-- Header with domain info -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="mb-0">
+                    @domain.getName() <span class="text-muted">(@domain.getCode())</span>
+                </h5>
+                <div>
+                    <span class="badge bg-light text-dark border me-1">@domain.getDomainType()</span>
+                    @if(domain.isEnabled) {
+                        <span class="badge bg-success">Active</span>
+                    } else {
+                        <span class="badge bg-danger">Inactive</span>
+                    }
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="@routes.DomainRouterController.editDomain(domainIdentity.uriFriendlyDomainTypeName(),domainIdentity.hashIDForURL())" class="btn btn-outline-primary">
+                    <i class="fa fa-pen me-1"></i>Edit
+                </a>
+                <a href="@routes.DomainRouterController.domainIndex(domainIdentity.uriFriendlyDomainTypeName())" class="btn btn-outline-secondary">Back</a>
+            </div>
+        </div>
+
+        <div class="row g-3">
+                <!-- General info -->
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">General</div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">Owner Code</dt><dd class="col-sm-8">@domainIdentity.domainOwnerCode()</dd>
+                            <dt class="col-sm-4">Owner Type</dt><dd class="col-sm-8">@domainIdentity.domainOwnerType()</dd>
+                            <dt class="col-sm-4">Created</dt><dd class="col-sm-8">@domainIdentity.domainCreatedAt()</dd>
+                            <dt class="col-sm-4">Updated</dt><dd class="col-sm-8">@Option(domainIdentity.domainCreatedAt()).map(_.toString).getOrElse("-")</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+                <!-- EndpointConfig basics -->
+            <div class="col-lg-6">
+                <div class="card h-100">
+                    <div class="card-header">Endpoint Basics</div>
+                    <div class="card-body">
+                    @defining(endpointConfig) { ec =>
+                        @if(ec == null) {
+                            <div class="text-muted">No endpoint configuration.</div>
+                        } else {
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4">Domain Type</dt><dd class="col-sm-8">@ec.getDomainOwnerType()</dd>
+                                <dt class="col-sm-4">Description</dt><dd class="col-sm-8">@ec.getDescription()</dd>
+                                <dt class="col-sm-4">Owner Code</dt><dd class="col-sm-8">@ec.getDomainOwnerCode()</dd>
+                                <dt class="col-sm-4">Owner ID</dt><dd class="col-sm-8">@ec.getDomainOwnerId()</dd>
+                            </dl>
+                        }
+                    }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <!-- EndpointConfig details -->
+        @defining(endpointConfig) { ec =>
+            @if(ec != null) {
+                <div class="row g-3 mt-1">
+                        <!-- Network -->
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header">Network</div>
+                            <div class="card-body">
+                            @defining(ec.getNetwork()) { net =>
+                                @if(net == null) {
+                                    <div class="text-muted">No network config.</div>
+                                } else {
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4">Base URL</dt><dd class="col-sm-8">@net.getBaseUrl()</dd>
+                                        <dt class="col-sm-4">Timeout</dt><dd class="col-sm-8">@net.getTimeoutMillis() ms</dd>
+                                        <dt class="col-sm-4">Use Proxy</dt><dd class="col-sm-8">@net.isUseProxy()</dd>
+                                    </dl>
+                                }
+                            }
+                            </div>
+                        </div>
+                    </div>
+
+                        <!-- Security -->
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header">Security</div>
+                            <div class="card-body">
+                            @defining(ec.getSecurity()) { sec =>
+                                @if(sec == null) {
+                                    <div class="text-muted">No security config.</div>
+                                } else {
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4">Requires Encryption</dt><dd class="col-sm-8">@sec.isEncryptPayload()</dd>
+                                        @defining(sec.getEncryption) { encrypt =>
+                                            @if(null == encrypt){
+                                                <div class="text-muted">No Encryption configuration.</div>
+
+                                            }else{
+                                                <!-- todo: display encryption config here -->
+                                            }
+
+                                        }
+                                    </dl>
+
+
+                                    <dl class="row mb-0">
+                                        <dt class="col-sm-4">Total Number of Authentications</dt><dd class="col-sm-8">@sec.getAuthConfigs.size()</dd>
+                                        @defining(sec.getAuthConfigs) { authConfigs =>
+                                            @if(authConfigs.isEmpty()){
+                                                <div class="text-muted">No Authentication configuration.</div>
+
+                                            }else{
+                                                    @for(authConfig <- authConfigs){
+                                                            <!-- todo: craftily display each auth config here possibly each in a card that spans three columns..you get:craftily-->
+                                                    }
+                                            }
+
+                                        }
+                                    </dl>
+                                }
+                            }
+                            </div>
+                        </div>
+                    </div>
+
+                        <!-- Endpoints -->
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header">Endpoints</div>
+                            <div class="card-body">
+                            @if(ec.getEndpoints() == null || ec.getEndpoints().isEmpty) {
+                                <div class="text-muted">No endpoints configured.</div>
+                            } else {
+                                <div class="row g-3">
+                                    @for(ed <- ec.getEndpoints().asScala) {
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-2 h-100">
+                                                <h6>@ed.getOperationType().name()</h6>
+                                                <dl class="row mb-0 small">
+                                                    <dt class="col-sm-4">Method</dt><dd class="col-sm-8">@ed.getMethod()</dd>
+                                                    <dt class="col-sm-4">URL</dt><dd class="col-sm-8"><code>@ed.getUrl()</code></dd>
+                                                    <dt class="col-sm-4"> Static Headers</dt>
+                                                        <dd class="col-sm-8">
+                                                        @if(ed.getHeaders() == null || ed.getHeaders().isEmpty) {
+                                                            <span class="text-muted">—</span>
+                                                        } else {
+                                                            <ul class="list-unstyled mb-0">
+                                                                @for(h <- ed.getHeaders().asScala) {
+                                                                    <li><code>@h.getName()</code>: @h.getValue()</li>
+                                                                }
+                                                            </ul>
+                                                        }
+                                                    </dd>
+
+                                                    <dt class="col-sm-4"> Dynamic Headers</dt>
+                                                    <dd class="col-sm-8">
+                                                        @if(ed.getDynamicHeaders == null || ed.getDynamicHeaders().isEmpty) {
+                                                            <span class="text-muted">—</span>
+                                                        } else {
+                                                            <ul class="list-unstyled mb-0">
+                                                                @for(h <- ed.getDynamicHeaders().asScala) {
+                                                                    <li><code>@h.getName()</code></li>
+                                                                }
+                                                            </ul>
+                                                        }
+                                                    </dd>
+                                                    <!-- todo: display runtimecontract here-->
+                                                </dl>
+                                            </div>
+                                        </div>
+                                    }}
+                            </div>
+                            }
+        </div>
+        </div>
+        </div>
+
+                <!-- Resilience & Metadata -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">Resilience</div>
+                    <div class="card-body">
+                    @defining(ec.getResilience()) { rc =>
+                        @if(rc == null) {
+                            <div class="text-muted">No resilience config.</div>
+                        } else {
+                            <pre class="small bg-light p-2 rounded">@rc.toString()</pre>
+                            <!-- todo: are you sure the above is not too hasty, why not let properly display this resislence too -->
+                        }
+                    }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">Metadata</div>
+                    <div class="card-body">
+                    @if(ec.getMetadata() == null || ec.getMetadata().isEmpty) {
+                        <div class="text-muted">No metadata.</div>
+                    } else {
+                        <ul class="list-unstyled mb-0 small">
+                        @for((k,v) <- ec.getMetadata().asScala) {
+                            <li><code>@k</code>: @v</li>
+                        }
+                        </ul>
+                    }
+        </div>
+        </div>
+        </div>
+        </div>
+        }
+</div>
+    }
+
+@scripts = {}

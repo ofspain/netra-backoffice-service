@@ -21,6 +21,16 @@ GET     /fin-insts/create               controllers.admin.FinancialInstitutionCo
 GET     /fin-insts/view/:hashedId       controllers.admin.FinancialInstitutionController.viewInstitute(hashedId: String, request: Request)
 GET     /fin-insts/edit/:hashedId       controllers.admin.FinancialInstitutionController.editInstitute(hashedId: String, request: Request)
 GET     /fin-insts/delete/:hashedId     controllers.admin.FinancialInstitutionController.deleteInstitute(hashedId: String, request: Request)
+GET     /fin-insts/save-redirect/     controllers.admin.FinancialInstitutionController.saveAndRedirectToConfig(request: Request)
+GET     /fin-insts/update-redirect/     controllers.admin.FinancialInstitutionController.updateAndRedirectToConfig(hashedId: String, request: Request)
+
+
+GET     /domains/edit/:hashedDomainType/:hashedDominId       controllers.admin.DomainRouterController.editDomain(hashedDomainType: String, hashedDominId: String)
+GET     /domains/:hashedDomainType     controllers.admin.DomainRouterController.domainIndex(hashedDomainType: String)
+
+
+GET     /domains/endpoint-configs/:hashedDomainType/:hashedDominId       controllers.admin.EndpointConfigController.showForm(hashedDomainType: String, hashedDominId: String, request: Request)
+GET     /domains/endpoint-configs/save     controllers.admin.EndpointConfigController.save(request: Request)
 
 
 POST     /save-new-fin-inst              controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
