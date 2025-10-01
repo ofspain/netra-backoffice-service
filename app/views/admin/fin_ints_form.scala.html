@@ -19,13 +19,6 @@
     }
 }
 
-@actionWithConfig = @{
-    if(isEdit){
-        routes.FinancialInstitutionController.updateAndRedirectToConfig(encodeUrlBoundId(fi.getId))
-    }else{
-        routes.FinancialInstitutionController.saveAndRedirectToConfig()
-    }
-}
 
 @selected_base_64 = @{
     if(fiForm.hasErrors()){
@@ -85,20 +78,18 @@
                         </div>
                     </div>
 
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="submit" class="btn btn-success">@if(isEdit) {Save} else {Save}</button>
+                    <div class="d-flex justify-content-between">
+                        <button type="submit" class="btn btn-success" name="action" value="save">
+                            @if(isEdit) {Update} else {Save}
+                        </button>
+
+                        <button type="submit" class="btn btn-primary ms-2" value="to-endpoint" name="action">
+                            @if(isEdit) {Update} else {Save} & Configure Endpoint
+                        </button>
                     </div>
+
                 </div>
             </div>
-        </form>
-
-            <!-- Second form for Save & Configure -->
-        <form id="fiFormWithConfig" action="@actionWithConfig" method="post" enctype="multipart/form-data" class="d-inline">
-            <input type="hidden" name="csrfToken" value="@UtilityController.csrfToken(req)"/>
-            @if(isEdit) {
-                <input type="hidden" name="id" value="@fi.getId()">
-            }
-            <button type="submit" class="btn btn-primary ms-2">Save & Configure Endpoint</button>
         </form>
     </div>
 }

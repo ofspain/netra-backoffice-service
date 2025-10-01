@@ -62,6 +62,7 @@ public class ResultSetToBeanMapper {
         return mapToFinancialInstitution(rs, "fi_");
     }
 
+
     /**
      * Map FinancialInstitution including EndpointConfig (joined result set)
      */

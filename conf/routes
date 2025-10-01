@@ -29,7 +29,7 @@ GET     /domains/edit/:hashedDomainType/:hashedDominId       controllers.admin.D
 GET     /domains/:hashedDomainType     controllers.admin.DomainRouterController.domainIndex(hashedDomainType: String)
 
 
-GET     /domains/endpoint-configs/:hashedDomainType/:hashedDominId       controllers.admin.EndpointConfigController.showForm(hashedDomainType: String, hashedDominId: String, request: Request)
+GET     /domains/endpoint-configs/:mode/:hashedDomainType/:hashedDominId       controllers.admin.EndpointConfigController.showForm(mode: String, hashedDomainType: String, hashedDominId: String, request: Request)
 GET     /domains/endpoint-configs/save     controllers.admin.EndpointConfigController.save(request: Request)
 
 

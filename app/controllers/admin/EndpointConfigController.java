@@ -1,29 +1,54 @@
 package controllers.admin;
 
+import com.netra.commons.contracts.Domain;
+import com.netra.commons.enums.DomainType;
+import com.netra.commons.models.FinancialInstitution;
+import com.netra.commons.models.Switcher;
 import com.netra.commons.models.endpoint.EndpointConfig;
 import com.netra.commons.util.BasicUtil;
 import dtos.DomainIdentity;
 import play.mvc.*;
+import services.FinancialInstitutionService;
+
 import javax.inject.Inject;
+
+import java.time.LocalDateTime;
 
 import static com.netra.commons.util.BasicUtil.decodeIdStringFromUrl;
 
 public class EndpointConfigController extends Controller {
 
-    @Inject
-    public EndpointConfigController() {}
+    private final FinancialInstitutionService finInstService;
 
-    public Result showForm(String hashedDomainType, String hashedId, Http.Request request) {
+    @Inject
+    public EndpointConfigController(FinancialInstitutionService finInstService) {
+        this.finInstService = finInstService;
+    }
+
+    public Result showForm(String mode, String hashedDomainType, String hashedId, Http.Request request) {
         Long domainId = decodeIdStringFromUrl(hashedId);
-        String domainType = BasicUtil.decodeStringFromURL(hashedDomainType);
-        String path = request.path();
+        String domainTypeStr = BasicUtil.decodeStringFromURL(hashedDomainType);
+        DomainType domainType = DomainType.valueOf(domainTypeStr);
+        LocalDateTime lastUpdated;
+        LocalDateTime createdAt;
+
         EndpointConfig ec = new EndpointConfig();
-        if(path.contains("update")){
+        if(mode.contains("update")){
             //todo: load ec for domain here and reinitialize ec
         }
-        //todo: use switch statement and domainType to load the actual domain here, then extract neede ppt into the dto
+        Domain domain;
+        switch (domainType){
+            case FINANCIAL_INSTITUTION -> {
+                domain = finInstService.findMinimalFinancialInstitutionByUniqueKey("id", domainId);
+                lastUpdated = ((FinancialInstitution) domain).getUpdatedAt();
+                createdAt = ((FinancialInstitution) domain).getCreatedAt();
+            }
+            default -> {
+                throw new RuntimeException("Domain not mapped");
+            }
+        }
 
-        DomainIdentity domainOwner = new DomainIdentity("",0l,null,"",null);
+        DomainIdentity domainOwner = new DomainIdentity(domainTypeStr,domainId,lastUpdated,domain.getDomainCode(),createdAt);
 
 
         // TODO: fetch FI + its endpoint config, and render dedicated form

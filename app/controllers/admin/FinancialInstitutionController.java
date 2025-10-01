@@ -61,23 +61,24 @@ public class FinancialInstitutionController extends Controller {
         formData = FormDataValidators.validateFinancialInstitution(formData,finInstService);
 
 
-        EndpointConfig endpointConfig = formData.get().getEndpointConfig();
-        endpointConfig.setDomainOwnerType(DomainType.FINANCIAL_INSTITUTION);
-        endpointConfig.setDomainOwnerCode(formData.get().getDomainCode());
 
-        String endpointFallbackStaticResponse = raw.get("static.response.value");
-        String endpointFallbackRedirectUrl = raw.get("redirect.url.value");
-        String endpointFallbackException = raw.get("exception.message.value");
-        Map<FallbackConfig.FallbackType, String> fallbackTypeValues = new HashMap<>();
-        fallbackTypeValues.put(FallbackConfig.FallbackType.STATIC_RESPONSE, endpointFallbackStaticResponse);
-        fallbackTypeValues.put(FallbackConfig.FallbackType.REDIRECT_ENDPOINT, endpointFallbackRedirectUrl);
-        fallbackTypeValues.put(FallbackConfig.FallbackType.EXCEPTION, endpointFallbackException);
-
-        Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig", fallbackTypeValues);
-
-        for (Map.Entry<String, String> entry : endpointErrors.entrySet()) {
-            formData = formData.withError(entry.getKey(), entry.getValue());
-        }
+//        EndpointConfig endpointConfig = formData.get().getEndpointConfig();
+//        endpointConfig.setDomainOwnerType(DomainType.FINANCIAL_INSTITUTION);
+//        endpointConfig.setDomainOwnerCode(formData.get().getDomainCode());
+//
+//        String endpointFallbackStaticResponse = raw.get("static.response.value");
+//        String endpointFallbackRedirectUrl = raw.get("redirect.url.value");
+//        String endpointFallbackException = raw.get("exception.message.value");
+//        Map<FallbackConfig.FallbackType, String> fallbackTypeValues = new HashMap<>();
+//        fallbackTypeValues.put(FallbackConfig.FallbackType.STATIC_RESPONSE, endpointFallbackStaticResponse);
+//        fallbackTypeValues.put(FallbackConfig.FallbackType.REDIRECT_ENDPOINT, endpointFallbackRedirectUrl);
+//        fallbackTypeValues.put(FallbackConfig.FallbackType.EXCEPTION, endpointFallbackException);
+//
+//        Map<String, String> endpointErrors = FormDataValidators.validateEndpointConfig(endpointConfig, "endpointConfig", fallbackTypeValues);
+//
+//        for (Map.Entry<String, String> entry : endpointErrors.entrySet()) {
+//            formData = formData.withError(entry.getKey(), entry.getValue());
+//        }
 
 
         String logoBase64 = formData.rawData().get("logo_binary");
@@ -100,13 +101,20 @@ public class FinancialInstitutionController extends Controller {
 
         //todo: clean up exception handling here
         try {
-            institution = finInstService.saveFinancialInstitutionWithEndpoint(institution).toCompletableFuture().get();
+            institution = finInstService.saveFinancialInstitutionOnly(institution).toCompletableFuture().get();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
 
-        return redirect(routes.FinancialInstitutionController.viewInstitute(encodeUrlBoundId(institution.getId()))); //ok(views.html.admin.fin_inst_single_BK.render(institution,request));
+        String action = raw.get("action");
+        String hashedID = encodeUrlBoundId(institution.getId());
+        if ("to-endpoint".equals(action)) {
+            String hashedDomainType = BasicUtil.encodeURLBoundString(DomainType.FINANCIAL_INSTITUTION.name());
+            return redirect(routes.EndpointConfigController.showForm("update",hashedDomainType, hashedID));
+        }
+
+        return redirect(routes.FinancialInstitutionController.viewInstitute(hashedID));
     }
 
 
@@ -162,7 +170,7 @@ public class FinancialInstitutionController extends Controller {
 
 
         // 🔑 redirect to EndpointConfig form after save
-        return redirect(routes.EndpointConfigController.showForm(hashedDomainType, hashedId));
+        return redirect(routes.EndpointConfigController.showForm("save",hashedDomainType, hashedId));
     }
 
     public Result updateAndRedirectToConfig(String hashedId, Http.Request request) {
@@ -196,7 +204,7 @@ public class FinancialInstitutionController extends Controller {
 
 
         // 🔑 redirect to EndpointConfig form after update
-        return redirect(routes.EndpointConfigController.showForm(hashedDomainType, hashedId));
+        return redirect(routes.EndpointConfigController.showForm("update",hashedDomainType, hashedId));
     }
 
 
@@ -214,11 +222,11 @@ public class FinancialInstitutionController extends Controller {
     }
 
     public Result viewInstitute(String hashedId, Http.Request request){
-       // Long id = decodeIdStringFromUrl(hashedId);
+        Long id = decodeIdStringFromUrl(hashedId);
 
         //todo: clean up exception handling here
         try {
-            FinancialInstitution institution = dummyInstitution(); //finInstService.findById(id).toCompletableFuture().get();
+            FinancialInstitution institution =  finInstService.findById(id).toCompletableFuture().get();
 
             EndpointConfig endpointConfig = institution.getEndpointConfig();
             DomainIdentity domainIdentity = new DomainIdentity(
