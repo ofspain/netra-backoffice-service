@@ -1,3 +1,6 @@
+DROP FUNCTION IF EXISTS get_financial_institution_with_endpoint(bigint);
+
+
 CREATE OR REPLACE FUNCTION get_financial_institution_with_endpoint(p_id BIGINT)
 RETURNS TABLE (
     -- Financial Institution fields

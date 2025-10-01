@@ -214,11 +214,11 @@ public class FinancialInstitutionController extends Controller {
     }
 
     public Result viewInstitute(String hashedId, Http.Request request){
-        Long id = decodeIdStringFromUrl(hashedId);
+       // Long id = decodeIdStringFromUrl(hashedId);
 
         //todo: clean up exception handling here
         try {
-            FinancialInstitution institution = finInstService.findById(id).toCompletableFuture().get();
+            FinancialInstitution institution = dummyInstitution(); //finInstService.findById(id).toCompletableFuture().get();
 
             EndpointConfig endpointConfig = institution.getEndpointConfig();
             DomainIdentity domainIdentity = new DomainIdentity(
@@ -308,10 +308,11 @@ public class FinancialInstitutionController extends Controller {
         FinancialInstitution institution = new FinancialInstitution();
         institution.setId(1l);
         institution.setCode("FBN");
-        institution.setName("First Bank of Nigeria");
+        institution.setName("First Bank Of Nigeria");
         institution.setDomainCode("fbn");
         institution.setCreatedAt(LocalDateTime.now());
         institution.setEndpointConfig(new EndpointConfig());
+        institution.setDisabled(false);
 
         institution.setLogoKey("logos/b6c2dd13-6c8d-4dc2-9d5e-eac83669d83d.png");
 

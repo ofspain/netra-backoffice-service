@@ -1,42 +1,48 @@
-CREATE OR REPLACE FUNCTION find_all_financial_institutions_with_endpoints(
+-- First drop the old function (with its exact argument types)
+DROP FUNCTION IF EXISTS find_all_financial_institutions_with_endpoints(
+    integer, integer, character varying, character varying
+    );
+
+-- Then recreate it with the new return structure
+CREATE FUNCTION find_all_financial_institutions_with_endpoints(
     p_limit INT DEFAULT 100,
     p_offset INT DEFAULT 0,
     p_sort_by VARCHAR(50) DEFAULT 'fi.created_at',
     p_sort_dir VARCHAR(4) DEFAULT 'DESC'
 ) RETURNS TABLE (
     -- Financial Institution fields
-    fi_id BIGINT,
-    fi_created_at TIMESTAMP,
-    fi_updated_at TIMESTAMP,
-    fi_name VARCHAR(255),
-    fi_code VARCHAR(100),
-    fi_domain_code VARCHAR(50),
-    fi_disabled BOOLEAN,
-    fi_logo_key TEXT,
-    fi_endpoint_config BIGINT,
-    
+                    fi_id BIGINT,
+                    fi_created_at TIMESTAMP,
+                    fi_updated_at TIMESTAMP,
+                    fi_name VARCHAR(255),
+                    fi_code VARCHAR(100),
+                    fi_domain_code VARCHAR(50),
+                    fi_disabled BOOLEAN,
+                    fi_logo_key TEXT,
+                    fi_endpoint_config BIGINT,
+
     -- Endpoint Config fields
-    ec_id BIGINT,
-    ec_created_at TIMESTAMP,
-    ec_updated_at TIMESTAMP,
-    ec_domain_owner_id BIGINT,
-    ec_domain_owner_type VARCHAR(50),
-    ec_domain_owner_code VARCHAR(100),
-    ec_description TEXT,
+                    ec_id BIGINT,
+                    ec_created_at TIMESTAMP,
+                    ec_updated_at TIMESTAMP,
+                    ec_domain_owner_id BIGINT,
+                    ec_domain_owner_type VARCHAR(50),
+                    ec_domain_owner_code VARCHAR(100),
+                    ec_description TEXT,
 
     -- Extracted JSONB fields
-    ec_base_url TEXT,
-    ec_timeout_millis INT,
-    ec_use_proxy BOOLEAN,
-    ec_proxy_config JSONB,
-    ec_security_config JSONB,
-    ec_endpoints JSONB,
-    ec_resilience_config JSONB,
-    ec_metadata JSONB,
+                    ec_base_url TEXT,
+                    ec_timeout_millis INT,
+                    ec_use_proxy BOOLEAN,
+                    ec_proxy_config JSONB,
+                    ec_security_config JSONB,
+                    ec_endpoints JSONB,
+                    ec_resilience_config JSONB,
+                    ec_metadata JSONB,
 
     -- Pagination info
-    total_count BIGINT
-) AS $$
+                    total_count BIGINT
+                ) AS $$
 DECLARE
 v_total_count BIGINT;
     v_sort_column TEXT;

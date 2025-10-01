@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS find_endpoint_config_by_id(bigint);
+
 CREATE OR REPLACE FUNCTION find_endpoint_config_by_id(
     p_id BIGINT
 ) RETURNS TABLE (

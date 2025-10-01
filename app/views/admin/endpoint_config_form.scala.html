@@ -1,11 +1,7 @@
-@import com.netra.commons.enums.DomainType
 @import controllers.admin.routes
-@import play.api.data.Forms._
 @import dtos.DomainIdentity
 @import com.netra.commons.models.endpoint.EndpointConfig
-@import views.html.utils.read_only_fields
 @(domainOwner: DomainIdentity, ec: EndpointConfig)(implicit req: play.mvc.Http.Request)
-
 
 @views.html.admin.layout("Endpoint Configuration", Html(""), scripts, req) {
     <div class="container py-4">
@@ -15,31 +11,28 @@
         </h2>
 
         <form method="post" action="@routes.EndpointConfigController.save()" class="needs-validation" novalidate>
+
                 <!-- Owner Info -->
             <div class="card mb-4 shadow-sm">
                 <div class="card-header bg-primary text-white">
                     <i class="bi bi-building me-2"></i> Owner Information
                 </div>
                 <div class="card-body row g-3">
-                    @read_only_fields(
-                        label = "Domain Owner Code",
-                        value = domainOwner.domainOwnerCode(),
-                        colSpan = "4",
-                        fieldName = Some("domainOwnerCode") // ensures it gets posted if needed
-                    )
-
-                    @read_only_fields(
-                        label = "Domain Owner Type",
-                        value = domainOwner.domainOwnerType(),
-                        colSpan = "4",
-                        fieldName = Some("domainOwnerType")
-                    )
+                    <div class="col-md-6">
+                        <label class="form-label">Domain Owner Code</label>
+                        <input type="text" class="form-control" readonly value="@domainOwner.domainOwnerCode()" name="domainOwnerCode">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Domain Owner Type</label>
+                        <input type="text" class="form-control" readonly value="@domainOwner.domainOwnerType()" name="domainOwnerType">
+                    </div>
                 </div>
-
             </div>
 
-                <!-- Network Config -->
+                <!-- Accordion -->
             <div class="accordion mb-3" id="accordionConfig">
+
+                    <!-- Network -->
                 <div class="accordion-item">
                     <h2 class="accordion-header" id="headingNetwork">
                         <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNetwork">
@@ -49,32 +42,32 @@
                     <div id="collapseNetwork" class="accordion-collapse collapse show" data-bs-parent="#accordionConfig">
                         <div class="accordion-body row g-3">
                             <div class="col-md-6">
-                                <label for="baseUrl" class="form-label">Base URL</label>
-                                <input type="url" class="form-control" id="baseUrl" name="network.baseUrl" placeholder="https://api.example.com" required>
+                                <label class="form-label">Base URL</label>
+                                <input type="url" class="form-control" name="network.baseUrl" placeholder="https://api.example.com" required>
                             </div>
                             <div class="col-md-3">
-                                <label for="timeout" class="form-label">Timeout (ms)</label>
-                                <input type="number" class="form-control" id="timeout" name="network.timeout" value="5000" required>
+                                <label class="form-label">Timeout (ms)</label>
+                                <input type="number" class="form-control" name="network.timeoutMillis" value="5000" required>
                             </div>
                             <div class="col-md-3 form-check mt-4">
-                                <input class="form-check-input" type="checkbox" id="useProxy" name="network.useProxy">
-                                <label class="form-check-label" for="useProxy">Use Proxy</label>
+                                <input class="form-check-input" type="checkbox" name="network.useProxy">
+                                <label class="form-check-label">Use Proxy</label>
                             </div>
                             <div class="col-md-6">
-                                <label for="proxyHost" class="form-label">Proxy Host</label>
-                                <input type="text" class="form-control" id="proxyHost" name="network.proxyHost">
+                                <label class="form-label">Proxy Host</label>
+                                <input type="text" class="form-control" name="network.proxyHost">
                             </div>
                             <div class="col-md-3">
-                                <label for="proxyPort" class="form-label">Proxy Port</label>
-                                <input type="number" class="form-control" id="proxyPort" name="network.proxyPort">
+                                <label class="form-label">Proxy Port</label>
+                                <input type="number" class="form-control" name="network.proxyPort">
                             </div>
                             <div class="col-md-3">
-                                <label for="proxyUser" class="form-label">Proxy Username</label>
-                                <input type="text" class="form-control" id="proxyUser" name="network.proxyUser">
+                                <label class="form-label">Proxy Username</label>
+                                <input type="text" class="form-control" name="network.proxyUser">
                             </div>
                             <div class="col-md-3">
-                                <label for="proxyPass" class="form-label">Proxy Password</label>
-                                <input type="password" class="form-control" id="proxyPass" name="network.proxyPass">
+                                <label class="form-label">Proxy Password</label>
+                                <input type="password" class="form-control" name="network.proxyPass">
                             </div>
                         </div>
                     </div>
@@ -89,27 +82,16 @@
                     </h2>
                     <div id="collapseSecurity" class="accordion-collapse collapse" data-bs-parent="#accordionConfig">
                         <div class="accordion-body">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="encryptionType" class="form-label">Encryption Type</label>
-                                    <select id="encryptionType" name="security.encryptionType" class="form-select">
-                                        <option>AES</option>
-                                        <option>RSA</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="algorithm" class="form-label">Algorithm</label>
-                                    <input type="text" class="form-control" id="algorithm" name="security.algorithm" placeholder="AES-256">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="key" class="form-label">Key (stored in vault)</label>
-                                    <input type="password" class="form-control" id="key" name="security.key">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="ivParam" class="form-label">IV Param</label>
-                                    <input type="text" class="form-control" id="ivParam" name="security.ivParam">
-                                </div>
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="encryptPayload" name="security.encryptPayload">
+                                <label class="form-check-label" for="encryptPayload">Encrypt Payload</label>
                             </div>
+
+                            <h6>Authentication Configs</h6>
+                            <div id="auth-container"></div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addAuth">
+                                <i class="bi bi-plus-circle me-1"></i> Add Authentication
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -140,21 +122,48 @@
                     </h2>
                     <div id="collapseResilience" class="accordion-collapse collapse" data-bs-parent="#accordionConfig">
                         <div class="accordion-body row g-3">
+                                <!-- Retry -->
+                            <h6>Retry</h6>
                             <div class="col-md-3">
-                                <label for="maxAttempts" class="form-label">Max Attempts</label>
-                                <input type="number" class="form-control" id="maxAttempts" name="resilience.maxAttempts" value="3">
+                                <label class="form-label">Max Attempts</label>
+                                <input type="number" class="form-control" name="resilience.retry.maxAttempts" value="3">
                             </div>
                             <div class="col-md-3">
-                                <label for="initialDelay" class="form-label">Initial Delay (ms)</label>
-                                <input type="number" class="form-control" id="initialDelay" name="resilience.initialDelay" value="200">
+                                <label class="form-label">Initial Delay (ms)</label>
+                                <input type="number" class="form-control" name="resilience.retry.initialDelayMillis" value="200">
                             </div>
                             <div class="col-md-3">
-                                <label for="multiplier" class="form-label">Multiplier</label>
-                                <input type="number" step="0.1" class="form-control" id="multiplier" name="resilience.multiplier" value="2.0">
+                                <label class="form-label">Max Delay (ms)</label>
+                                <input type="number" class="form-control" name="resilience.retry.maxDelayMillis" value="2000">
                             </div>
                             <div class="col-md-3">
-                                <label for="maxDelay" class="form-label">Max Delay (ms)</label>
-                                <input type="number" class="form-control" id="maxDelay" name="resilience.maxDelay" value="2000">
+                                <label class="form-label">Multiplier</label>
+                                <input type="number" step="0.1" class="form-control" name="resilience.retry.multiplier" value="2.0">
+                            </div>
+
+                                <!-- Circuit Breaker -->
+                            <h6 class="mt-3">Circuit Breaker</h6>
+                            <div class="col-md-6">
+                                <label class="form-label">Failure Threshold</label>
+                                <input type="number" class="form-control" name="resilience.circuitBreaker.failureThreshold">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Reset Timeout (ms)</label>
+                                <input type="number" class="form-control" name="resilience.circuitBreaker.resetTimeoutMillis">
+                            </div>
+
+                                <!-- Fallback -->
+                            <h6 class="mt-3">Fallback</h6>
+                            <div class="col-md-6">
+                                <label class="form-label">Type</label>
+                                <select class="form-select" name="resilience.fallback.type">
+                                    <option value="STATIC">Static</option>
+                                    <option value="REDIRECT">Redirect</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Value</label>
+                                <input type="text" class="form-control" name="resilience.fallback.value">
                             </div>
                         </div>
                     </div>
@@ -175,7 +184,7 @@
                 <button type="submit" class="btn btn-success me-2">
                     <i class="bi bi-check-circle me-1"></i> Save Config
                 </button>
-                <a href="#" class="btn btn-outline-secondary">
+                <a href="@routes.DomainRouterController.domainIndex(domainOwner.uriFriendlyDomainTypeName())" class="btn btn-outline-secondary">
                     <i class="bi bi-x-circle me-1"></i> Cancel
                 </a>
             </div>
@@ -185,50 +194,91 @@
 
 @scripts = {
     <script>
+            // --- Endpoints ---
             document.getElementById('addEndpoint').addEventListener('click', function() {
                 const container = document.getElementById('endpoints-container');
                 const index = container.children.length;
                 const template = `
-                <div class="card mb-3 shadow-sm p-3">
-                    <div class="d-flex justify-content-between">
-                        <h6>Endpoint #${index + 1}</h6>
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-endpoint">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                    <div class="row g-3 mt-1">
-                        <div class="col-md-6">
-                            <label class="form-label">Operation Name</label>
-                            <input type="text" class="form-control" name="endpoints[${index}].operationName" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">URL</label>
-                            <input type="text" class="form-control" name="endpoints[${index}].url" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Method</label>
-                            <select class="form-select" name="endpoints[${index}].method">
-                                <option>GET</option>
-                                <option>POST</option>
-                                <option>PUT</option>
-                                <option>DELETE</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Headers (JSON)</label>
-                            <textarea class="form-control" name="endpoints[${index}].headers" rows="2"></textarea>
-                        </div>
-                    </div>
-                </div>`;
+        <div class="card mb-3 shadow-sm p-3">
+            <div class="d-flex justify-content-between">
+                <h6>Endpoint #${index + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-endpoint"><i class="bi bi-trash"></i></button>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label class="form-label">Operation Type</label>
+                    <select class="form-select" name="endpoints[${index}].operationType">
+                        <option value="READ">READ</option>
+                        <option value="CREATE">CREATE</option>
+                        <option value="UPDATE">UPDATE</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Method</label>
+                    <select class="form-select" name="endpoints[${index}].method">
+                        <option>GET</option>
+                        <option>POST</option>
+                        <option>PUT</option>
+                        <option>DELETE</option>
+                    </select>
+                </div>
+                <div class="col-md-12">
+                    <label class="form-label">URL</label>
+                    <input type="text" class="form-control" name="endpoints[${index}].url" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Static Headers (JSON)</label>
+                    <textarea class="form-control" name="endpoints[${index}].headers" rows="2"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Dynamic Headers (comma separated)</label>
+                    <input type="text" class="form-control" name="endpoints[${index}].dynamicHeaders">
+                </div>
+            </div>
+        </div>`;
                 container.insertAdjacentHTML('beforeend', template);
                 bindRemove();
             });
 
+            // --- Auth Configs ---
+            document.getElementById('addAuth').addEventListener('click', function() {
+                const container = document.getElementById('auth-container');
+                const index = container.children.length;
+                const template = `
+        <div class="card mb-3 shadow-sm p-3">
+            <div class="d-flex justify-content-between">
+                <h6>Auth Config #${index + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-auth"><i class="bi bi-trash"></i></button>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label class="form-label">Auth Type</label>
+                    <select class="form-select" name="security.authConfigs[${index}].authType">
+                        <option value="ApiKeyAuth">API Key</option>
+                        <option value="BasicAuth">Basic</option>
+                        <option value="BearerTokenAuth">Bearer Token</option>
+                        <option value="MtlsAuth">mTLS</option>
+                        <option value="CustomSignatureAuth">Custom Signature</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Config JSON</label>
+                    <textarea class="form-control" name="security.authConfigs[${index}].config" rows="2" placeholder="Key/Value JSON depending on type"></textarea>
+                </div>
+            </div>
+        </div>`;
+                container.insertAdjacentHTML('beforeend', template);
+                bindRemove();
+            });
+
+            // --- Remove buttons ---
             function bindRemove() {
                 document.querySelectorAll('.remove-endpoint').forEach(btn => {
-                    btn.addEventListener('click', function() {
-                        this.closest('.card').remove();
-                    });
+                    btn.onclick = function() { this.closest('.card').remove(); }
+                });
+                document.querySelectorAll('.remove-auth').forEach(btn => {
+                    btn.onclick = function() { this.closest('.card').remove(); }
                 });
             }
     </script>
