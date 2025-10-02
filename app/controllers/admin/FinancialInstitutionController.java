@@ -38,7 +38,7 @@ public class FinancialInstitutionController extends Controller {
     @Inject
     public FinancialInstitutionController(FormFactory formFactory, FinancialInstitutionService finInstService, S3Service s3Service) {
         this.formFactory = formFactory;
-        this.institutionForm = formFactory.form(FinancialInstitution.class);
+        this.institutionForm = this.formFactory.form(FinancialInstitution.class);
         this.finInstService = finInstService;
         this.s3Service = s3Service;
     }

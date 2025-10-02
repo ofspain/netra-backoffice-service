@@ -31,6 +31,7 @@ GET     /domains/:hashedDomainType     controllers.admin.DomainRouterController.
 
 GET     /domains/endpoint-configs/:mode/:hashedDomainType/:hashedDominId       controllers.admin.EndpointConfigController.showForm(mode: String, hashedDomainType: String, hashedDominId: String, request: Request)
 GET     /domains/endpoint-configs/save     controllers.admin.EndpointConfigController.save(request: Request)
+GET     /domains/endpoint-configs/update/:hashedId   controllers.admin.EndpointConfigController.update(hashedId: String, request: Request)
 
 
 POST     /save-new-fin-inst              controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
