@@ -2,9 +2,12 @@ package utilities.components;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.netra.commons.enums.DomainType;
 import com.netra.commons.models.FinancialInstitution;
+import com.netra.commons.models.endpoint.EndpointConfig;
 import com.netra.commons.util.BasicUtil;
 import controllers.admin.routes;
+import dtos.DomainIdentity;
 import play.mvc.Result;
 import services.FinancialInstitutionService;
 
@@ -42,5 +45,13 @@ public class FinancialInstitutionHandler implements DomainHandler<FinancialInsti
     public LocalDateTime getUpdatedAt(FinancialInstitution domain) {
         return domain.getUpdatedAt();
     }
+
+    @Override
+    public EndpointConfig resolveEndpointConfig(Long domainId){
+        //todo:use id to load fin_inst
+        //retrieve its endpointConfig (or return new if endpointConfig id is null)
+        return new EndpointConfig();
+    }
+
 }
 

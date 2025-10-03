@@ -1,6 +1,8 @@
 package utilities.components;
 
 import com.netra.commons.contracts.Domain;
+import com.netra.commons.models.endpoint.EndpointConfig;
+import dtos.DomainIdentity;
 import play.mvc.Result;
 
 import java.time.LocalDateTime;
@@ -8,6 +10,8 @@ import java.time.LocalDateTime;
 public interface DomainHandler<T extends Domain> {
     T resolve(Long domainId);
     Result redirectToView(T domain);
+
+    EndpointConfig resolveEndpointConfig(Long domainId);
 
     default LocalDateTime getCreatedAt(T domain) { return null; }
     default LocalDateTime getUpdatedAt(T domain) { return null; }
