@@ -7,6 +7,7 @@ import security.{Secured, SecurityConfig, UserContext}
 import services.{EndpointConfigService, FinancialInstitutionService, S3Service}
 import services.db.JdbcWrapper
 import org.pac4j.core.config.Config
+import utilities.components.{DomainHandlerRegistry, FinancialInstitutionHandler}
 import utilities.rest.{RestClientConfig, RestClientService}
 
 import javax.inject.Provider
@@ -20,6 +21,11 @@ class ConfigModule extends Module {
       bind[S3Service].toSelf.eagerly(),
       bind[FinancialInstitutionService].toSelf,
       bind[EndpointConfigService].toSelf,
+
+      //util components
+
+      bind[DomainHandlerRegistry].toSelf,
+      bind[FinancialInstitutionHandler].toSelf,
 
       //rest utils
       bind[RestClientConfig].toSelf.eagerly(),

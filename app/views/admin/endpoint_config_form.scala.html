@@ -45,6 +45,8 @@
                         <label class="form-label">Domain Owner Type</label>
                         <input type="text" class="form-control" readonly value="@domainOwner.domainOwnerType()" name="domainOwnerType">
                     </div>
+                    <input type="hidden" value="@domainOwner.domainOwnerId()" name="domainOwnerId"/>
+                    <input type="hidden" value="@domainOwner.domainOwnerCode()" name="domainOwnerCode"/>
                 </div>
             </div>
 
@@ -162,7 +164,7 @@
                             @utils.field_select_dropdown(
                                 ecForm("resilience.fallback.type"),
                                 "Type",
-                                options = scala.collection.immutable.Map("STATIC" -> "Static", "REDIRECT" -> "Redirect"),
+                                options = scala.collection.immutable.Map("STATIC_RESPONSE" -> "Static", "REDIRECT_ENDPOINT" -> "Redirect", "EXCEPTION"->"Exception"),
                                 colSpan = "6"
                             )
                             @utils.field_text(ecForm("resilience.fallback.value"), "Value")
@@ -179,7 +181,7 @@
                     <i class="bi bi-tags me-2"></i> Metadata
                 </div>
                 <div class="card-body">
-                    <textarea class="form-control" name="metadata" rows="3" placeholder="Enter JSON key/value metadata"></textarea>
+                    <textarea class="form-control" name="@ecForm("metadata")" rows="3" placeholder="Enter JSON key/value metadata"></textarea>
                 </div>
             </div>
 

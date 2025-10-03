@@ -209,4 +209,107 @@ public class FormDataValidators {
     }
 
 
+    public static Form<EndpointConfig> validateEndpointConfig(
+            Form<EndpointConfig> configForm,
+            Map<String, Object> metadata
+    ) {
+        Map<String, String> errors = new HashMap<>();
+
+        EndpointConfig config = configForm.get();
+
+        // Domain checks
+        if (!BasicUtil.validString(config.getDomainOwnerCode())) {
+            configForm = configForm.withError("domainOwnerCode", "Domain owner code is required for endpoint");
+
+        }
+        if (config.getDomainOwnerType() == null) {
+            configForm = configForm.withError("domainOwnerType", "Domain owner type is required for endpoint");
+
+        }
+
+        if (config.getDomainOwnerId() == null) {
+            configForm = configForm.withError("domainOwnerId", "Domain owner id is required for endpoint");
+
+        }
+
+        // --- Network validation ---
+//        NetworkConfig net = config.getNetwork();
+//        if (net == null) {
+//            errors.put(keyConcatenate(basePrefix, "network"), "Network configuration is required");
+//        } else {
+//            if (!BasicUtil.validString(net.getBaseUrl())) {
+//                errors.put(keyConcatenate(basePrefix, "network.baseUrl"), "Base URL is compulsory for endpoint configuration");
+//            }
+//            if (net.getTimeoutMillis() <= 0) {
+//                errors.put(keyConcatenate(basePrefix, "network.timeoutMillis"), "Timeout must be a positive number");
+//            }
+//            if (net.isUseProxy()) {
+//                if (net.getProxy() == null) {
+//                    errors.put(keyConcatenate(basePrefix, "network.proxy"), "Proxy configuration must be provided when proxy is enabled");
+//                } else {
+//                    errors.putAll(validateProxyConfig(net.getProxy(), keyConcatenate(basePrefix, "network.proxy")));
+//                }
+//            }
+//        }
+//
+//        // --- Endpoints validation ---
+//        if (config.getEndpoints() == null || config.getEndpoints().isEmpty()) {
+//            errors.put(keyConcatenate(basePrefix, "endpoints"), "At least one endpoint detail must be provided");
+//        } else {
+//            for (EndpointDetail endpointDetail : config.getEndpoints()) {
+//                String opPrefix = keyConcatenate(basePrefix, "endpoints.");
+//                errors.putAll(validateEndpointDetail(endpointDetail, opPrefix));
+//            }
+//        }
+//
+//        // --- Resilience config ---
+//        ResilienceConfig resilience = config.getResilience();
+//        if (resilience != null && resilience.getFallback() != null) {
+//            FallbackConfig fb = resilience.getFallback();
+//            if (fb.getType() != null) {
+//                switch (fb.getType()) {
+//                    case STATIC_RESPONSE -> {
+//                        String val = fallbackValues.get(FallbackConfig.FallbackType.STATIC_RESPONSE);
+//                        if (!BasicUtil.validString(val)) {
+//                            errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Static response JSON cannot be empty");
+//                        } else {
+//                            try {
+//                                new ObjectMapper().readTree(val);
+//                                fb.setValue(val);
+//                            } catch (Exception e) {
+//                                errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Static response must be valid JSON");
+//                            }
+//                        }
+//                    }
+//                    case REDIRECT_ENDPOINT -> {
+//                        String endpoint = fallbackValues.get(FallbackConfig.FallbackType.REDIRECT_ENDPOINT);
+//                        if (!BasicUtil.validString(endpoint)) {
+//                            errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Redirect endpoint URL must be specified");
+//                        } else {
+//                            try {
+//                                new java.net.URL(endpoint);
+//                                fb.setValue(endpoint);
+//                            } catch (Exception e) {
+//                                errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Redirect endpoint must be a valid URL");
+//                            }
+//                        }
+//                    }
+//                    case EXCEPTION -> {
+//                        String msg = fallbackValues.get(FallbackConfig.FallbackType.EXCEPTION);
+//                        if (!BasicUtil.validString(msg)) {
+//                            errors.put(keyConcatenate(basePrefix, "resilience.fallback.value"), "Exception message is required");
+//                        } else {
+//                            fb.setValue(msg);
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//
+//        return errors;
+
+        return null;
+    }
+
+
 }

@@ -1,5 +1,6 @@
 package services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.netra.commons.exceptions.AppDataAccessException;
 import com.netra.commons.models.endpoint.EndpointConfig;
 import services.db.JdbcWrapper;
@@ -10,6 +11,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+
+import static utilities.MapperUtil.toJsonb;
 
 public class EndpointConfigService {
 
@@ -145,6 +148,47 @@ public class EndpointConfigService {
                     return new SearchResult<>(items, totalCount);
                 });
     }
+
+    public CompletionStage<EndpointConfig> saveEndpointConfig(EndpointConfig endpointConfig) {
+        if (endpointConfig == null) {
+            throw new IllegalArgumentException("EndpointConfig cannot be null at this point");
+        }
+
+        return jdbcWrapper.withTransaction(connection -> {
+            try {
+                // Call upsert_endpoint_config
+                return jdbcWrapper.call("upsert_endpoint_config", connection)
+                        .param(endpointConfig.getId() == null ? null : endpointConfig.getId())       // p_id BIGINT
+                        .param(endpointConfig.getDomainOwnerId())                                   // p_domain_owner_id BIGINT
+                        .param(endpointConfig.getDomainOwnerType() == null ? null : endpointConfig.getDomainOwnerType().toString()) // p_domain_owner_type VARCHAR
+                        .param(endpointConfig.getDomainOwnerCode())                                 // p_domain_owner_code VARCHAR
+                        .param(endpointConfig.getDescription())                                     // p_description TEXT
+                        .param(toJsonb(endpointConfig.getNetwork()))                                // p_network_config JSONB
+                        .param(toJsonb(endpointConfig.getSecurity()))                               // p_security_config JSONB
+                        .param(toJsonb(endpointConfig.getEndpoints()))                              // p_endpoints JSONB
+                        .param(toJsonb(endpointConfig.getResilience()))                             // p_resilience_config JSONB
+                        .param(toJsonb(endpointConfig.getMetadata()))                               // p_metadata JSONB
+                        .execute(rs -> {
+                            try {
+                                if (rs.next()) {
+                                    // Map SQL result back into EndpointConfig domain
+                                    return ResultSetToBeanMapper.mapResultSetToEndpointConfig(rs);
+                                }
+                                // If no result, return input object as fallback
+                                return endpointConfig;
+                            } catch (SQLException e) {
+                                throw new AppDataAccessException("EndpointConfig upsert failed", e);
+                            }
+                        });
+
+            } catch (SQLException e) {
+                throw new AppDataAccessException("Transaction failed while processing a db action", e);
+            } catch (JsonProcessingException ex) {
+                throw new AppDataAccessException("Transaction failed while wrapping value to JSON string", ex);
+            }
+        });
+    }
+
 
 
 
