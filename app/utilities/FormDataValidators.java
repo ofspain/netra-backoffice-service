@@ -2,10 +2,12 @@ package utilities;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.netra.commons.enums.DomainType;
+import com.netra.commons.models.CustomerUser;
 import com.netra.commons.models.endpoint.*;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
 import play.data.Form;
+import services.CustomerUserService;
 import services.FinancialInstitutionService;
 
 import java.util.Collections;
@@ -309,6 +311,11 @@ public class FormDataValidators {
 //        return errors;
 
         return null;
+    }
+
+    public static Form<CustomerUser> validateCustomerUser(Form<CustomerUser> customerUserForm, CustomerUserService customerUserService){
+        //todo: do app level validation here
+        return customerUserForm;
     }
 
 

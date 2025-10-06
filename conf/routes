@@ -37,5 +37,15 @@ GET     /domains/endpoint-configs/update/:hashedId   controllers.admin.EndpointC
 POST     /save-new-fin-inst              controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
 POST     /fin-insts/update/:hashedId     controllers.admin.FinancialInstitutionController.updateOldFinInst(hashedId: String, request: Request)
 
+
+
+GET     /customer-users                      controllers.admin.CustomerUserController.index(request: Request)
+GET     /customer-users/create               controllers.admin.CustomerUserController.createNewUser(request: Request)
+GET     /customer-users/view/:hashedId       controllers.admin.CustomerUserController.viewUser(hashedId: String, request: Request)
+GET     /customer-users/edit/:hashedId       controllers.admin.CustomerUserController.editUser(hashedId: String, request: Request)
+POST    /customer-users/delete/:hashedId     controllers.admin.CustomerUserController.deleteUser(hashedId: String, request: Request)
+POST    /customer-users/save                 controllers.admin.CustomerUserController.saveNewUser(request: Request)
+POST    /customer-users/update/:hashedId     controllers.admin.CustomerUserController.updateOldUser(hashedId: String, request: Request)
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

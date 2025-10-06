@@ -3,13 +3,14 @@
 @import controllers.routes.FilesController
 @import scalas.utils.StaticAssets
 @import com.netra.commons.util.BasicUtil.encodeUrlBoundId
-@(fis: java.util.List[FinancialInstitution], metadata: java.util.Map[String, Object])(implicit req: play.mvc.Http.Request)
+@import utilities.PaginationMetadata
+@(fis: java.util.List[FinancialInstitution], metadata: PaginationMetadata)(implicit req: play.mvc.Http.Request)
 
-@page = @{metadata.get("page").asInstanceOf[Integer]}
-@sortDirection = @{metadata.get("sort_direction").asInstanceOf[String]}
-@limit = @{metadata.get("limit").asInstanceOf[Integer]}
-@sortBy = @{metadata.get("sort_by").asInstanceOf[String]}
-@pageCount = @{metadata.get("page_count").asInstanceOf[Integer]}
+@page = @{metadata.getPage()}
+@sortDirection = @{metadata.getSortDirection()}
+@limit = @{metadata.getLimit()}
+@sortBy = @{metadata.getSortBy()}
+@pageCount = @{metadata.getPageCount()}
 
 @views.html.admin.layout("Financial Institutions", Html(""), scripts, req) {
     <div class="col-12">

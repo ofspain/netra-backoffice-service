@@ -1,8 +1,12 @@
 package services.db;
 
 import com.google.common.graph.Network;
+import com.netra.commons.database.EnhancedBeanPropertyRowMapper;
 import com.netra.commons.enums.DomainType;
 import com.netra.commons.exceptions.AppDataAccessException;
+import com.netra.commons.models.AccountDetail;
+import com.netra.commons.models.CustomerUser;
+import com.netra.commons.models.Identity;
 import com.netra.commons.models.endpoint.*;
 import com.netra.commons.models.FinancialInstitution;
 import lombok.experimental.UtilityClass;
@@ -224,6 +228,81 @@ public class ResultSetToBeanMapper {
             throw new AppDataAccessException("Error mapping paginated results with endpoints", e);
         }
     }
+
+
+    public static PaginatedResult<CustomerUser> mapToCustomerUser(
+            ResultSet rs, int limit, int offset) {
+        try {
+            List<CustomerUser> items = new ArrayList<>();
+            long totalCount = 0;
+
+            while (rs.next()) {
+                if (totalCount == 0) {
+                    totalCount = rs.getLong("total_count");
+                }
+                items.add(EnhancedBeanPropertyRowMapper
+                        .newInstance(CustomerUser.class)
+                        .mapRow(rs, 1));
+            }
+
+            return new PaginatedResult<>(items, totalCount, limit, offset);
+        } catch (SQLException e) {
+            throw new AppDataAccessException("Error mapping paginated results", e);
+        }
+    }
+
+
+    public static CustomerUser mapToCustomerUser(ResultSet rs, String prefix) {
+        try {
+            CustomerUser user = new CustomerUser();
+
+            // Base entity fields
+            user.setId(getNullableLong(rs, prefix + "id"));
+            user.setCreatedAt(getLocalDateTime(rs, prefix + "created_at"));
+            user.setUpdatedAt(getLocalDateTime(rs, prefix + "updated_at"));
+
+            // Core fields
+            user.setName(getNullableString(rs, prefix + "name"));
+            user.setDisabled(getNullableBoolean(rs, prefix + "disabled", false));
+            user.setUserPhone(getNullableString(rs, prefix + "user_phone"));
+            user.setUserEmail(getNullableString(rs, prefix + "user_email"));
+            String identityUUID = getNullableString(rs, prefix + "identity_uuid");
+            if(null != identityUUID){
+                Identity identity = new Identity();
+                identity.setIdentityUuid(identityUUID);
+                identity.setUsername(user.getUserPhone());
+                identity.setDomainType(DomainType.CUSTOMER);
+                identity.setDisabled(user.getDisabled());
+                identity.setDomainCode(Identity.CUSTOMERUSER_DOMAINCODE);
+                user.setIdentity(identity);
+            }
+
+            // Parse accounts JSON
+            String accountsJson = getNullableString(rs, prefix + "accounts");
+            if (accountsJson != null && !accountsJson.isBlank()) {
+                try {
+                    //parseJson(getNullableString(rs, prefix + "security_config"), SecurityConfig.class)
+
+                    List<AccountDetail> accounts = parseJson(getNullableString(rs, prefix+"accounts"), List.class);
+                    user.setAccounts(accounts);
+                } catch (Exception ex) {
+                    throw new AppDataAccessException("Error parsing accounts JSON for CustomerUser", ex);
+                }
+            } else {
+                user.setAccounts(new ArrayList<>());
+            }
+
+            // Static domain fields (not persisted)
+            user.setDomainType(DomainType.CUSTOMER);
+            user.setDomainCode(Identity.CUSTOMERUSER_DOMAINCODE);
+
+            return user;
+
+        } catch (SQLException e) {
+            throw new AppDataAccessException("Error mapping CustomerUser", e);
+        }
+    }
+
 
     // ============================================================
     // Helper Methods

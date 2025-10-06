@@ -16,6 +16,7 @@ import services.FinancialInstitutionService;
 import services.S3Service;
 import utilities.FormDataValidators;
 import utilities.PaginatedResult;
+import utilities.PaginationHelper;
 
 import javax.inject.Inject;
 import java.time.LocalDateTime;
@@ -274,39 +275,48 @@ public class FinancialInstitutionController extends Controller {
 
 
     public Result index(Http.Request request){
-        String pageStr = request.queryString("page").orElse("1");
-        int page = 1;
-        if(StringUtils.isNumeric(pageStr)){
-            page = Integer.parseInt(pageStr);
-        }
-        String limitStr = request.queryString("limit").orElse("20");
-        int limit = 1;
-        if(StringUtils.isNumeric(limitStr)){
-            limit = Integer.parseInt(limitStr);
-        }
+//        String pageStr = request.queryString("page").orElse("1");
+//        int page = 1;
+//        if(StringUtils.isNumeric(pageStr)){
+//            page = Integer.parseInt(pageStr);
+//        }
+//        String limitStr = request.queryString("limit").orElse("20");
+//        int limit = 1;
+//        if(StringUtils.isNumeric(limitStr)){
+//            limit = Integer.parseInt(limitStr);
+//        }
+//
+//
+//        String sortBy = request.queryString("sort").orElse("created_at");
+//        String direction = request.queryString("sort_direction").orElse("DESC");
+//
+//
+//        try {
+//            PaginatedResult<FinancialInstitution> paginatedResult = finInstService
+//                    .findAll(limit, page, sortBy, direction).toCompletableFuture().get();
+//
+//            List<FinancialInstitution> listed = paginatedResult.getItems();
+//            Map<String,Object> metaData = new HashMap<>();
+//            metaData.put("sort_direction", direction);
+//            metaData.put("page", page);
+//            metaData.put("limit", limit);
+//            metaData.put("sort_by", sortBy);
+//            metaData.put("page_count", paginatedResult.getTotalPages());
+//            return ok(views.html.admin.fin_inst_lists.render(listed, metaData, request));
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            throw new RuntimeException(e);
+//        }
 
 
-        String sortBy = request.queryString("sort").orElse("created_at");
-        String direction = request.queryString("sort_direction").orElse("DESC");
-
-
-        try {
-            PaginatedResult<FinancialInstitution> paginatedResult = finInstService
-                    .findAll(limit, page, sortBy, direction).toCompletableFuture().get();
-
-            List<FinancialInstitution> listed = paginatedResult.getItems();
-            Map<String,Object> metaData = new HashMap<>();
-            metaData.put("sort_direction", direction);
-            metaData.put("page", page);
-            metaData.put("limit", limit);
-            metaData.put("sort_by", sortBy);
-            metaData.put("page_count", paginatedResult.getTotalPages());
-            return ok(views.html.admin.fin_inst_lists.render(listed, metaData, request));
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+        return PaginationHelper.renderPaginatedList(
+                request,
+                params -> finInstService.findAll(params.getLimit(), params.getPage(), params.getSortBy(), params.getDirection()),
+                "created_at",
+                "DESC",
+                (listed, metaData, req) -> views.html.admin.fin_inst_lists.render(listed, metaData, req)
+        );
 
     }
 

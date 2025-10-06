@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.sql.SQLException;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -112,11 +113,26 @@ public class FinancialInstitutionService {
 
 
     // Find by criteria with custom mapping
-    public CompletionStage<List<FinancialInstitution>> findByCriteria(String namePattern, Boolean activeOnly) {
-        return jdbcClient.call("find_financial_institutions_by_criteria")
-                .param(namePattern)
-                .param(activeOnly)
-                .queryAsync(rs -> ResultSetToBeanMapper.mapToFinancialInstitutions(rs, this::enrichWithAdditionalData));
+    public List<FinancialInstitution> findCacheableActiveFinInst() {
+        String sql = "SELECT * FROM financial_institutions order by name asc";
+        List<FinancialInstitution> financialInstitutions = new ArrayList<>();
+        FinancialInstitution financialInstitution = jdbcClient.sql(sql)
+                .query(rs -> {
+                    try {
+                        while (rs.next()) {
+                            financialInstitutions.add(EnhancedBeanPropertyRowMapper
+                                    .newInstance(FinancialInstitution.class)
+                                    .mapRow(rs, 1));
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return null;
+                });//.toCompletableFuture().join()
+
+
+        return financialInstitutions;
+
     }
 
     // Transactional save with endpoint

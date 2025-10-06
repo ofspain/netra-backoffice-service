@@ -1,0 +1,298 @@
+@import com.netra.commons.models.{CustomerUser, AccountDetail, FinancialInstitution}
+@import com.netra.commons.enums.AccountType
+@import com.netra.commons.models.CardScheme
+@import controllers.admin.routes
+@import com.netra.commons.util.BasicUtil.encodeUrlBoundId
+@import views.html.utils
+
+@(userForm: Form[CustomerUser], user: CustomerUser, institutions: java.util.List[FinancialInstitution])(implicit req: play.mvc.Http.Request)
+
+@isEdit = @{
+    user.getId() != null
+}
+
+@action = @{
+    if (isEdit) {
+        routes.CustomerUserController.updateOldUser(encodeUrlBoundId(user.getId))
+    } else {
+        routes.CustomerUserController.saveNewUser()
+    }
+}
+
+@views.html.admin.layout(if(isEdit) "Edit Customer User" else "Create Customer User", Html(""), scripts, req) {
+
+    <div class="col-12 col-lg-10 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <ul class="nav nav-pills justify-content-center" id="formSteps">
+                    <li class="nav-item"><a class="nav-link active" href="#" data-step="1">1. Customer Info</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" data-step="2">2. Accounts</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" data-step="3">3. Identity</a></li>
+                </ul>
+            </div>
+
+            <form method="post" action="@action" id="customerUserForm">
+                <input type="hidden" name="csrfToken" value="@UtilityController.csrfToken(req)"/>
+
+                @if(isEdit) {
+                    <input type="hidden" name="id" value="@user.getId()">
+                }
+
+                <div class="card-body">
+                        <!-- Step 1 -->
+                    <div class="step" id="step1">
+                        @utils.field_text(userForm("name"), "Full Name", required = true, htmlValidationMessage = "Full Name is required.")
+                        @utils.field_text(userForm("userEmail"), "Your Email", inputType = "email", helpText = Some("Just for communication purposes"))
+
+                        <div class="row">
+                            @utils.field_text(userForm("userPhone"), "Your Phone Number", colSpan = "4", required = true, htmlValidationMessage = "Phone number is required.", helpText = Some("Will serve as your username also"))
+                            @utils.field_text(userForm("identity.password"), "Password", colSpan = "4", required = true, htmlValidationMessage = "Password is required.", inputType = "password")
+                        </div>
+
+                        @utils.field_toggle_button(field = userForm("disabled"), label = "Disabled", id = "disabledSwitch", colSpan = "6", helpText = Some("Flag user as active or not"))
+                    </div>
+
+                        <!-- Step 2 -->
+                    <div class="step d-none" id="step2">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0">Accounts</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addAccount">
+                                <i class="fa fa-plus"></i> Add Account
+                            </button>
+                        </div>
+
+                        <div id="accountsContainer">
+                        @for((acct, i) <- user.getAccounts().asScala.zipWithIndex) {
+                            <div class="border rounded p-3 mb-3 account-block">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Account Number</label>
+                                        <input type="text" name="accounts[@i].accountNumber" value="@acct.getAccountNumber()" class="form-control" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Account Type</label>
+                                        <select name="accounts[@i].accountType" class="form-select">
+                                        @for(t <- AccountType.values()) {
+                                            <option value="@t" @if(acct.getAccountType()==t){"selected"}>@t</option>
+                                        }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Issuing Institution</label>
+                                        <select name="accounts[@i].issuingInstitution" class="form-select">
+                                        @for(fi <- institutions.asScala) {
+                                            <option value="@fi.getCode()" @if(acct.getIssuingInstitution()!=null && fi.getCode()==acct.getIssuingInstitution().getCode()){"selected"}>@fi.getName()</option>
+                                        }
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mt-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Registered Phone</label>
+                                        <input type="text" name="accounts[@i].registeredPhone" value="@acct.getRegisteredPhone()" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Registered Email</label>
+                                        <input type="email" name="accounts[@i].registeredEmail" value="@acct.getRegisteredEmail()" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Card Scheme</label>
+                                        <select name="accounts[@i].card.cardScheme" class="form-select">
+                                            <option value="">--</option>
+                                            @for(scheme <- CardScheme.values()) {
+                                                <option value="@scheme" @if(acct.getCard()!=null && acct.getCard().getCardScheme()==scheme){"selected"}>@scheme.name()</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mt-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">First Six Digits</label>
+                                        <input type="text" name="accounts[@i].card.firstSixDigits" value="@acct.getCard()?.getFirstSixDigits()" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Last Four Digits</label>
+                                        <input type="text" name="accounts[@i].card.lastFourDigits" value="@acct.getCard()?.getLastFourDigits()" class="form-control">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Length of Digits</label>
+                                        <input type="text" name="accounts[@i].card.digitLength" value="@acct.getCard()?.getDigitLength()" class="form-control">
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-3 removeAccount">
+                                    <i class="fa fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        }
+                        </div>
+                    </div>
+
+                        <!-- Step 3 -->
+                    <div class="step d-none" id="step3">
+                        <p class="text-muted">Identity form section goes here...</p>
+                    </div>
+                </div>
+
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" id="prevStep">Previous</button>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-primary" id="nextStep">Next</button>
+                        <button type="submit" class="btn btn-success d-none" id="saveBtn">
+                            <i class="fa fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+        <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmRemoveModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Confirm Removal</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to remove this account?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirmRemoveBtn">Yes, Remove</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@scripts = {
+    <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const steps = document.querySelectorAll('.step');
+                const navLinks = document.querySelectorAll('#formSteps .nav-link');
+                let current = 0;
+
+                function showStep(i) {
+                    steps.forEach((s, idx) => s.classList.toggle('d-none', idx !== i));
+                    navLinks.forEach((l, idx) => l.classList.toggle('active', idx === i));
+                    document.getElementById('prevStep').disabled = i === 0;
+                    document.getElementById('nextStep').classList.toggle('d-none', i === steps.length - 1);
+                    document.getElementById('saveBtn').classList.toggle('d-none', i !== steps.length - 1);
+                }
+
+                document.getElementById('nextStep').onclick = () => showStep(++current);
+                document.getElementById('prevStep').onclick = () => showStep(--current);
+                navLinks.forEach((l, i) => l.onclick = (e) => { e.preventDefault(); current = i; showStep(i); });
+                showStep(0);
+
+                // Capture dynamic values for selects
+                const accountTypes = `@for(t <- AccountType.values()) {
+                                        <option value="@t">@t</option>
+                                       }
+                                    `;
+                const institutions = `@for(fi <- institutions.asScala) {
+                                        <option value="@fi.getId()">@fi.getName()</option>
+                                      }
+                                    `;
+                const cardSchemes = `@for(s <- CardScheme.values()) {
+                                        <option value="@s">@s.name()</option>
+                                    }
+                                   `;
+                // Dynamic Add/Remove Accounts
+                const container = document.getElementById('accountsContainer');
+                const addBtn = document.getElementById('addAccount');
+                let accountToRemove = null;
+
+                function reindexAccounts() {
+                    container.querySelectorAll('.account-block').forEach((block, i) => {
+                        block.querySelectorAll('input, select').forEach(el => {
+                            el.name = el.name.replace(/accounts\[\d+\]/, `accounts[${i}]`);
+                        });
+                    });
+                }
+
+                addBtn.onclick = () => {
+                    const idx = container.querySelectorAll('.account-block').length;
+                    const template = `
+                <div class="border rounded p-3 mb-3 account-block">
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Account Number</label>
+                            <input class="form-control" name="accounts[${idx}].accountNumber" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Account Type</label>
+                            <select name="accounts[${idx}].accountType" class="form-select">${accountTypes}</select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Issuing Institution</label>
+                            <select name="accounts[${idx}].issuingInstitution" class="form-select">${institutions}</select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Registered Phone</label>
+                            <input class="form-control" name="accounts[${idx}].registeredPhone">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Registered Email</label>
+                            <input type="email" class="form-control" name="accounts[${idx}].registeredEmail">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Card Scheme</label>
+                            <select name="accounts[${idx}].card.cardScheme" class="form-select">
+                                <option value="">--</option>${cardSchemes}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-2">
+                        <div class="col-md-6">
+                            <label class="form-label">First Six Digits</label>
+                            <input class="form-control" name="accounts[${idx}].card.firstSixDigits">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Last Four Digits</label>
+                            <input class="form-control" name="accounts[${idx}].card.lastFourDigits">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Length of Digits</label>
+                            <input class="form-control" name="accounts[${idx}].card.digitLength">
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-danger mt-3 removeAccount">
+                        <i class="fa fa-trash"></i> Remove
+                    </button>
+                </div>`;
+                    container.insertAdjacentHTML('beforeend', template);
+                };
+
+                // Handle remove click + confirmation modal
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmRemoveModal'));
+                const confirmBtn = document.getElementById('confirmRemoveBtn');
+
+                container.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.removeAccount');
+                    if (btn) {
+                        accountToRemove = btn.closest('.account-block');
+                        confirmModal.show();
+                    }
+                });
+
+                confirmBtn.addEventListener('click', () => {
+                    if (accountToRemove) {
+                        accountToRemove.remove();
+                        reindexAccounts();
+                        accountToRemove = null;
+                    }
+                    confirmModal.hide();
+                });
+            });
+    </script>
+}

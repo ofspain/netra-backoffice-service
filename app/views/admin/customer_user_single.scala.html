@@ -1,0 +1,149 @@
+@import com.netra.commons.models.{CustomerUser, AccountDetail, CardScheme}
+@import controllers.admin.routes
+@import com.netra.commons.util.BasicUtil.encodeUrlBoundId
+@(user: CustomerUser)(implicit req: play.mvc.Http.Request)
+
+@views.html.admin.layout("Customer User Details", Html(""), scripts, req) {
+
+    <div class="col-12 col-lg-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="mb-0">
+                <i class="fa fa-user-circle me-2 text-primary"></i>
+                @user.getName()
+            </h5>
+            <div class="btn-group">
+                <a href="@routes.CustomerUserController.editUser(encodeUrlBoundId(user.getId()))" class="btn btn-sm btn-outline-primary">
+                    <i class="fa fa-pen"></i> Edit
+                </a>
+                <a href="@routes.CustomerUserController.deleteUser(encodeUrlBoundId(user.getId()))" class="btn btn-sm btn-outline-danger confirm2">
+                    <i class="fa fa-trash"></i> Delete
+                </a>
+            </div>
+        </div>
+
+            <!-- CUSTOMER INFO CARD -->
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-header bg-light fw-semibold">
+                <i class="fa fa-id-card me-2 text-primary"></i> Customer Info
+            </div>
+            <div class="card-body">
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <strong>Name:</strong> @user.getName()
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Email:</strong> @user.getUserEmail()
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <strong>Phone:</strong> @user.getUserPhone()
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Status:</strong>
+                        @if(user.getDisabled()) {
+                            <span class="badge bg-danger">Disabled</span>
+                        } else {
+                            <span class="badge bg-success">Active</span>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <strong>Domain:</strong>
+                    <span class="text-muted">@user.getDomainCode()</span>
+                </div>
+            </div>
+        </div>
+
+            <!-- ACCOUNTS CARD -->
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-header bg-light fw-semibold d-flex justify-content-between align-items-center">
+                <div><i class="fa fa-credit-card me-2 text-success"></i> Linked Accounts</div>
+                <span class="badge bg-primary">@user.getAccounts().size()</span>
+            </div>
+            <div class="card-body">
+            @if(user.getAccounts().isEmpty()) {
+                <p class="text-muted fst-italic mb-0">No accounts linked yet.</p>
+            } else {
+                <div class="row g-3">
+                @for(acct <- user.getAccounts().asScala) {
+                    <div class="col-md-6">
+                        <div class="card border shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">@acct.getAccountNumber()</h6>
+                                    <span class="badge bg-secondary">@acct.getAccountType()</span>
+                                </div>
+
+                                <div class="small text-muted mb-1">
+                                    <i class="fa fa-bank me-1"></i>
+                                    @if(acct.getIssuingInstitution() != null) {
+                                        @acct.getIssuingInstitution().getName()
+                                    } else {
+                                        <em>Unknown Institution</em>
+                                    }
+                                </div>
+
+                                <div class="small mb-1">
+                                    <strong>Phone:</strong> @acct.getRegisteredPhone()
+                                </div>
+                                <div class="small mb-1">
+                                    <strong>Email:</strong> @acct.getRegisteredEmail()
+                                </div>
+
+                                <div class="mt-2 border-top pt-2">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <div>
+                                        @if(acct.getCard() != null && acct.getCard().getCardScheme() != null) {
+                                            <span class="badge bg-info text-dark">
+                                            @acct.getCard().getCardScheme().toString()
+                                            </span>
+                                        } else {
+                                            <span class="badge bg-light text-muted">No Card</span>
+                                        }
+                                        </div>
+                                        @if(acct.getCard() != null) {
+                                            <small class="text-muted">
+                                                @acct.getCard().getFirstSixDigits() ***** @acct.getCard().getLastFourDigits()
+                                            </small>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="mt-2">
+                                @if(acct.getDisabled()) {
+                                    <span class="badge bg-danger">Disabled</span>
+                                } else {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                </div>
+            }
+            </div>
+        </div>
+
+            <!-- IDENTITY CARD -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light fw-semibold">
+                <i class="fa fa-id-badge me-2 text-warning"></i> Identity
+            </div>
+            <div class="card-body">
+@*            @if(user.getIdentity() == null) {*@
+@*                <p class="text-muted fst-italic mb-0">No identity data recorded.</p>*@
+@*            } else {*@
+@*                <div class="row mb-2">*@
+@*                    <div class="col-md-6"><strong>Type:</strong> @user.getIdentity().getType()</div>*@
+@*                    <div class="col-md-6"><strong>Number:</strong> @user.getIdentity().getValue()</div>*@
+@*                </div>*@
+@*                <div><strong>Issued By:</strong> @user.getIdentity().getIssuer()</div>*@
+@*            }*@
+            </div>
+        </div>
+    </div>
+}
+
+@scripts = { }
