@@ -1,5 +1,5 @@
 @import scalas.utils.StaticAssets
-@()
+@()(implicit req: play.mvc.Http.Request)
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -26,15 +26,16 @@
 
                 <h4 class="text-center">Sign In</h4>
 
-                <form>
+                <form action="@routes.AuthController.login()" method="post">
+                    <input type="hidden" name="csrfToken" value="@UtilityController.csrfToken(req)"/>
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
-                        <input type="text" class="form-control" id="username" placeholder="Enter username">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter username">
                     </div>
 
                     <div class="mb-3">
                         <label for="password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="password" placeholder="Enter password">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter password">
                     </div>
 
                     <div class="d-grid">

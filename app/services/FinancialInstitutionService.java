@@ -138,37 +138,38 @@ public class FinancialInstitutionService {
     // Transactional save with endpoint
     public CompletionStage<FinancialInstitution> saveFinancialInstitutionWithEndpoint(FinancialInstitution fi) {
         EndpointConfig endpointConfig = fi.getEndpointConfig();
-        if(null == endpointConfig){
-            throw new IllegalArgumentException("EndpointConfig can not be null at this point");
+        if (endpointConfig == null) {
+            throw new IllegalArgumentException("EndpointConfig cannot be null at this point");
         }
+
         return jdbcClient.withTransaction(connection -> {
             try {
-                // Upsert endpoint config - return the input object if no result set
+                // 🔹 1. Upsert Endpoint Config first
                 EndpointConfig savedEndpoint = jdbcClient.call("upsert_endpoint_config", connection)
-                        .param(endpointConfig.getId() == null ? null : endpointConfig.getId()) // BIGINT
-                        .param(endpointConfig.getDomainOwnerId())                                 // VARCHAR
-                        .param(endpointConfig.getDomainOwnerType().toString())                      // VARCHAR
-                        .param(endpointConfig.getDomainOwnerCode())                                 // VARCHAR
-                        .param(endpointConfig.getDescription())                                // TEXT
-                        .param(toJsonb(endpointConfig.getNetwork()))                             // JSONB
-                        .param(toJsonb(endpointConfig.getSecurity()))                             // JSONB
-                        .param(toJsonb(endpointConfig.getEndpoints()))                             // JSONB
-                        .param(toJsonb(endpointConfig.getResilience()))                             // JSONB
-                        .param(toJsonb(endpointConfig.getMetadata()))                             // JSONB
-
-                        .execute(rs -> {
+                        .param(endpointConfig.getId())
+                        .param(endpointConfig.getDomainOwnerId())
+                        .param(endpointConfig.getDomainOwnerType() == null ? null :
+                                endpointConfig.getDomainOwnerType().toString())
+                        .param(endpointConfig.getDomainOwnerCode())
+                        .param(endpointConfig.getDescription())
+                        .param(toJsonb(endpointConfig.getNetwork()))
+                        .param(toJsonb(endpointConfig.getSecurity()))
+                        .param(toJsonb(endpointConfig.getEndpoints()))
+                        .param(toJsonb(endpointConfig.getResilience()))
+                        .param(toJsonb(endpointConfig.getMetadata()))
+                        .query(rs -> {
                             try {
                                 if (rs.next()) {
                                     return ResultSetToBeanMapper.mapResultSetToEndpointConfig(rs);
                                 }
-                                // If no result set, return the original input
+                                // No result → return original
                                 return endpointConfig;
                             } catch (SQLException e) {
                                 throw new AppDataAccessException("Endpoint config upsert failed", e);
                             }
                         });
 
-                // Upsert financial institution - return input if no result set
+                // 🔹 2. Upsert Financial Institution
                 FinancialInstitution savedFI = jdbcClient.call("upsert_financial_institution", connection)
                         .param(fi.getId())
                         .param(fi.getName())
@@ -176,15 +177,15 @@ public class FinancialInstitutionService {
                         .param(fi.getDomainCode())
                         .param(fi.getDisabled())
                         .param(fi.getLogoKey())
-                        .param(savedEndpoint.getId())
-                        .param(true)
-                        .param(true)
-                        .execute(rs -> {
+                        .param(savedEndpoint.getId()) // link endpoint config
+                        .param(true)                   // maybe audit_enabled
+                        .param(true)                   // maybe propagate_endpoints
+                        .query(rs -> {
                             try {
                                 if (rs.next()) {
                                     return ResultSetToBeanMapper.mapToFinancialInstitution(rs);
                                 }
-                                // If no result set, return the original input with updated endpoint reference
+                                // No result → return input FI
                                 fi.setEndpointConfig(savedEndpoint);
                                 return fi;
                             } catch (SQLException e) {
@@ -192,16 +193,18 @@ public class FinancialInstitutionService {
                             }
                         });
 
+                // 🔹 Link endpoint to institution
                 savedFI.setEndpointConfig(savedEndpoint);
                 return savedFI;
 
-            } catch (SQLException e) {
-                throw new AppDataAccessException("Transaction failed while processing a db action", e);
-            }catch (JsonProcessingException ex){
-                throw new AppDataAccessException("Transaction failed while wrapping value to json string", ex);
+            } catch (JsonProcessingException e) {
+                throw new AppDataAccessException("Failed serializing value to JSON", e);
+            } catch (Exception e) {
+                throw new AppDataAccessException("Transaction failed while saving financial institution with endpoint", e);
             }
         });
     }
+
 
 
     // Helper method to resolve endpoint config
@@ -324,24 +327,27 @@ public class FinancialInstitutionService {
                         .param(fi.getDomainCode())
                         .param(fi.getDisabled())
                         .param(fi.getLogoKey())
-                        .param(null)
-                        .param(true)
-                        .param(true)
-                        .execute(rs -> {
+                        .param(null)       // endpoint_id
+                        .param(true)       // audit_enabled
+                        .param(true)       // propagate_endpoints
+                        .query(rs -> {     // ✅ use query() instead of execute()
                             try {
                                 if (rs.next()) {
                                     return ResultSetToBeanMapper.mapToFinancialInstitution(rs);
                                 }
+                                // no result → return the input object
                                 return fi;
                             } catch (SQLException e) {
                                 throw new AppDataAccessException("Financial institution upsert failed", e);
                             }
                         });
-            } catch (SQLException e) {
-                throw new AppDataAccessException("Transaction failed while processing a db action", e);
+
+            } catch (Exception e) {
+                throw new AppDataAccessException("Transaction failed while saving financial institution", e);
             }
         });
     }
+
 
 
 

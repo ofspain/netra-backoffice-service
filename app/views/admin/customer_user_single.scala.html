@@ -66,7 +66,7 @@
                 <p class="text-muted fst-italic mb-0">No accounts linked yet.</p>
             } else {
                 <div class="row g-3">
-                @for(acct <- user.getAccounts().asScala) {
+                @for(acct <- user.getAccounts()) {
                     <div class="col-md-6">
                         <div class="card border shadow-sm h-100">
                             <div class="card-body">
@@ -104,7 +104,7 @@
                                         </div>
                                         @if(acct.getCard() != null) {
                                             <small class="text-muted">
-                                                @acct.getCard().getFirstSixDigits() ***** @acct.getCard().getLastFourDigits()
+                                                @acct.getCard().formulateMaskedPan()
                                             </small>
                                         }
                                     </div>

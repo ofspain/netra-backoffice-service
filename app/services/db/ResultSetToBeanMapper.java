@@ -1,5 +1,6 @@
 package services.db;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.graph.Network;
 import com.netra.commons.database.EnhancedBeanPropertyRowMapper;
 import com.netra.commons.enums.DomainType;
@@ -283,8 +284,10 @@ public class ResultSetToBeanMapper {
                 try {
                     //parseJson(getNullableString(rs, prefix + "security_config"), SecurityConfig.class)
 
-                    List<AccountDetail> accounts = parseJson(getNullableString(rs, prefix+"accounts"), List.class);
-                    user.setAccounts(accounts);
+                    List<AccountDetail> accounts = parseJson(
+                            getNullableString(rs, prefix + "accounts"),
+                            new TypeReference<List<AccountDetail>>() {}
+                    ); user.setAccounts(accounts);
                 } catch (Exception ex) {
                     throw new AppDataAccessException("Error parsing accounts JSON for CustomerUser", ex);
                 }
@@ -359,6 +362,15 @@ public class ResultSetToBeanMapper {
         if (json == null) return null;
         try {
             return MapperUtil.projectObjectMapper().readValue(json, clazz);
+        } catch (Exception e) {
+            throw new AppDataAccessException("Failed to parse JSON", e);
+        }
+    }
+
+    private static <T> T parseJson(String json, com.fasterxml.jackson.core.type.TypeReference<T> typeRef) {
+        if (json == null) return null;
+        try {
+            return MapperUtil.projectObjectMapper().readValue(json, typeRef);
         } catch (Exception e) {
             throw new AppDataAccessException("Failed to parse JSON", e);
         }

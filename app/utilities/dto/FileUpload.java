@@ -1,8 +1,6 @@
 package utilities.dto;
 
 
-import javax.swing.*;
-
 public class FileUpload {
 
     public FileUpload(String binary, FileAction action){

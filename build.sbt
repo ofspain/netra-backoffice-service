@@ -41,7 +41,8 @@ libraryDependencies ++= Seq(
   "org.pac4j" % "pac4j-http" % pac4jVersion,
   "org.pac4j" % "pac4j-jwt"  % pac4jVersion,
   "com.typesafe.play" %% "play-ahc-ws" % "2.9.6",
-  "net.coobird" % "thumbnailator" % "0.4.20"
+  "net.coobird" % "thumbnailator" % "0.4.20",
+  "com.auth0" % "java-jwt" % "4.5.0"
 
 
 //  "org.hibernate.validator" % "hibernate-validator" % "6.2.5.Final",
@@ -53,6 +54,8 @@ dependencyOverrides ++= Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % "2.14.3",
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.14.3",
   "com.fasterxml.jackson.core" % "jackson-annotations" % "2.14.3",
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % "2.14.3",
+  "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.14.3",
   "org.pac4j" % "pac4j-core" % pac4jVersion,
   "org.pac4j" % "pac4j-http" % pac4jVersion,
   "org.pac4j" % "pac4j-jwt"  % pac4jVersion

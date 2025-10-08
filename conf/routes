@@ -12,40 +12,45 @@ GET     /secure-health   controllers.HealthController.secureHealth(request: Requ
 
 # An example controller showing a sample home page
 GET     /auth/logout                controllers.AuthController.logout(request: Request)
+POST     /auth/login                controllers.AuthController.login(request: Request)
+GET     /auth/auth-login                controllers.AuthController.loginForm(request: Request)
 
 #GET     /files-signed              controllers.FilesController.s3Signed(key: String)
 GET     /files-s3-thumbnail        controllers.FilesController.s3Thumb(key: String)
 
-GET     /fin-insts                      controllers.admin.FinancialInstitutionController.index(request: Request)
-GET     /fin-insts/create               controllers.admin.FinancialInstitutionController.createNewFinInst(request: Request)
-GET     /fin-insts/view/:hashedId       controllers.admin.FinancialInstitutionController.viewInstitute(hashedId: String, request: Request)
-GET     /fin-insts/edit/:hashedId       controllers.admin.FinancialInstitutionController.editInstitute(hashedId: String, request: Request)
-GET     /fin-insts/delete/:hashedId     controllers.admin.FinancialInstitutionController.deleteInstitute(hashedId: String, request: Request)
-GET     /fin-insts/save-redirect/     controllers.admin.FinancialInstitutionController.saveAndRedirectToConfig(request: Request)
-GET     /fin-insts/update-redirect/     controllers.admin.FinancialInstitutionController.updateAndRedirectToConfig(hashedId: String, request: Request)
+GET     /admin/fin-insts                      controllers.admin.FinancialInstitutionController.index(request: Request)
+GET     /admin/fin-insts/create               controllers.admin.FinancialInstitutionController.createNewFinInst(request: Request)
+GET     /admin/fin-insts/view/:hashedId       controllers.admin.FinancialInstitutionController.viewInstitute(hashedId: String, request: Request)
+GET     /admin/fin-insts/edit/:hashedId       controllers.admin.FinancialInstitutionController.editInstitute(hashedId: String, request: Request)
+GET     /admin/fin-insts/delete/:hashedId     controllers.admin.FinancialInstitutionController.deleteInstitute(hashedId: String, request: Request)
+GET     /admin/fin-insts/save-redirect/     controllers.admin.FinancialInstitutionController.saveAndRedirectToConfig(request: Request)
+GET     /admin/fin-insts/update-redirect/     controllers.admin.FinancialInstitutionController.updateAndRedirectToConfig(hashedId: String, request: Request)
 
 
-GET     /domains/edit/:hashedDomainType/:hashedDominId       controllers.admin.DomainRouterController.editDomain(hashedDomainType: String, hashedDominId: String)
-GET     /domains/:hashedDomainType     controllers.admin.DomainRouterController.domainIndex(hashedDomainType: String)
+GET     /admin/domains/edit/:hashedDomainType/:hashedDominId       controllers.admin.DomainRouterController.editDomain(hashedDomainType: String, hashedDominId: String)
+GET     /admin/domains/:hashedDomainType     controllers.admin.DomainRouterController.domainIndex(hashedDomainType: String)
 
 
-GET     /domains/endpoint-configs/:mode/:hashedDomainType/:hashedDominId       controllers.admin.EndpointConfigController.showForm(mode: String, hashedDomainType: String, hashedDominId: String, request: Request)
-GET     /domains/endpoint-configs/save     controllers.admin.EndpointConfigController.save(request: Request)
-GET     /domains/endpoint-configs/update/:hashedId   controllers.admin.EndpointConfigController.update(hashedId: String, request: Request)
+GET     /admin/domains/endpoint-configs/:mode/:hashedDomainType/:hashedDominId       controllers.admin.EndpointConfigController.showForm(mode: String, hashedDomainType: String, hashedDominId: String, request: Request)
+GET     /admin/domains/endpoint-configs/save     controllers.admin.EndpointConfigController.save(request: Request)
+GET     /admin/domains/endpoint-configs/update/:hashedId   controllers.admin.EndpointConfigController.update(hashedId: String, request: Request)
 
 
-POST     /save-new-fin-inst              controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
-POST     /fin-insts/update/:hashedId     controllers.admin.FinancialInstitutionController.updateOldFinInst(hashedId: String, request: Request)
+POST     /admin/save-new-fin-inst              controllers.admin.FinancialInstitutionController.saveNewFinInst(request: Request)
+POST     /admin/fin-insts/update/:hashedId     controllers.admin.FinancialInstitutionController.updateOldFinInst(hashedId: String, request: Request)
 
 
 
-GET     /customer-users                      controllers.admin.CustomerUserController.index(request: Request)
-GET     /customer-users/create               controllers.admin.CustomerUserController.createNewUser(request: Request)
-GET     /customer-users/view/:hashedId       controllers.admin.CustomerUserController.viewUser(hashedId: String, request: Request)
-GET     /customer-users/edit/:hashedId       controllers.admin.CustomerUserController.editUser(hashedId: String, request: Request)
-POST    /customer-users/delete/:hashedId     controllers.admin.CustomerUserController.deleteUser(hashedId: String, request: Request)
-POST    /customer-users/save                 controllers.admin.CustomerUserController.saveNewUser(request: Request)
-POST    /customer-users/update/:hashedId     controllers.admin.CustomerUserController.updateOldUser(hashedId: String, request: Request)
+GET     /admin/customer-users                      controllers.admin.CustomerUserController.index(request: Request)
+GET     /admin/customer-users/create               controllers.admin.CustomerUserController.createNewUser(request: Request)
+GET     /admin/customer-users/view/:hashedId       controllers.admin.CustomerUserController.viewUser(hashedId: String, request: Request)
+GET     /admin/customer-users/edit/:hashedId       controllers.admin.CustomerUserController.editUser(hashedId: String, request: Request)
+POST    /admin/customer-users/delete/:hashedId     controllers.admin.CustomerUserController.deleteUser(hashedId: String, request: Request)
+POST    /admin/customer-users/save                 controllers.admin.CustomerUserController.saveNewUser(request: Request)
+POST    /admin/customer-users/update/:hashedId     controllers.admin.CustomerUserController.updateOldUser(hashedId: String, request: Request)
+
+
+GET    /customer-users/:hashedId     controllers.customer.user.CustomerUserDashboard.index(hashedId: String, request: Request)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

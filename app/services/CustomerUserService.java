@@ -1,13 +1,12 @@
 package services;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.netra.commons.database.EnhancedBeanPropertyRowMapper;
 import com.netra.commons.exceptions.AppDataAccessException;
 import com.netra.commons.models.CustomerUser;
-import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.models.Identity;
+import com.netra.commons.requests.CreateIdentityRequest;
 import play.libs.Json;
 import services.db.JdbcWrapper;
 import services.db.ResultSetToBeanMapper;
@@ -41,8 +40,9 @@ public class CustomerUserService {
 
     public CompletionStage<PaginatedResult<CustomerUser>> findAll(
             int limit, int offset, String sortBy, String sortDir) {
+        System.out.println("finding all user....");
 
-        return jdbcClient.call("find_all_customer_users")
+        return jdbcClient.sql("SELECT * FROM find_all_customer_users(?, ?, ?, ?)")
                 .param(limit)
                 .param(offset)
                 .param(sortBy)
@@ -50,10 +50,12 @@ public class CustomerUserService {
                 .queryAsync(rs -> ResultSetToBeanMapper.mapToCustomerUser(rs, limit, offset));
     }
 
-    public CompletionStage<CustomerUser> saveCustomerUser(CustomerUser user, Identity identity, String prefix) {
+    public CompletionStage<CustomerUser> saveCustomerUser(CustomerUser user, CreateIdentityRequest identityRequest, String prefix) {
         try {
-            String fullPath = authrexSettings.getAuthrexBaseUrl() + authrexSettings.getUserRegistrationBaseUrl();
-            var response = restClientService.post(fullPath, identity).toCompletableFuture().join();
+            String fullPath = authrexSettings.getAuthrexBaseUrl() + authrexSettings.getCustomerUserRegistrationPath();
+            var response = restClientService.post(fullPath, identityRequest).toCompletableFuture().join();
+
+            System.out.println("REPONSE "+new ObjectMapper().writeValueAsString(response));
 
             if (!response.isSuccess()) {
                 throw new IllegalStateException("Failed to save user identity " +
@@ -62,6 +64,9 @@ public class CustomerUserService {
 
 
             Identity createdIdentity = response.getBodyDataAs(Identity.class, "data");
+
+            System.out.println("created identity: "+Json.mapper().writeValueAsString(createdIdentity));
+
             System.out.println("✅ Registered identity UUID: " + createdIdentity.getIdentityUuid());
 
 

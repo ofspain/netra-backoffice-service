@@ -4,6 +4,7 @@ import com.netra.commons.enums.DomainType;
 import com.netra.commons.models.CustomerUser;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.models.Identity;
+import com.netra.commons.requests.CreateIdentityRequest;
 import com.netra.commons.util.BasicUtil;
 import org.apache.commons.lang3.StringUtils;
 import play.data.Form;
@@ -72,10 +73,12 @@ public class CustomerUserController extends Controller {
 
 
         try {
-//            PaginatedResult<CustomerUser> paginatedResult = customerUserService
-//                    .findAll(limit, page, sortBy, direction).toCompletableFuture().get();
+            PaginatedResult<CustomerUser> paginatedResult = customerUserService
+                    .findAll(limit, page, sortBy, direction).toCompletableFuture().get();
 
-            List<CustomerUser> listed = new ArrayList<>(); //paginatedResult.getItems();
+            System.out.println("ITEMS "+paginatedResult.getItems().size());
+
+            List<CustomerUser> listed = paginatedResult.getItems();
             Map<String,Object> metaData = new HashMap<>();
             metaData.put("sort_direction", direction);
             metaData.put("page", page);
@@ -95,11 +98,17 @@ public class CustomerUserController extends Controller {
         Long decodedId = BasicUtil.decodeIdStringFromUrl(encodedUserId);
         CustomerUser user = customerUserService.findCustomerUser("id", decodedId);
 
+        System.out.println("ACCT DETAILS "+user.getAccounts());
+
         return ok(views.html.admin.customer_user_single.render(user, request));
     }
 
     public Result editUser(String encodedUserId, Http.Request request){
-        return ok("");
+        Long id = BasicUtil.decodeIdStringFromUrl(encodedUserId);
+        CustomerUser user = customerUserService.findCustomerUser("id", id);
+        Form<CustomerUser> formData = customerUserForm.fill(user);
+        List<FinancialInstitution> financialInstitutions = financialInstitutionService.findCacheableActiveFinInst();
+        return ok(views.html.admin.customer_user_form.render(formData, user, financialInstitutions, request));
     }
 
     public Result updateOldUser(String encodedUserId, Http.Request request){
@@ -132,8 +141,9 @@ public class CustomerUserController extends Controller {
             Identity identity = new Identity();
             identity.setDisabled(user.getDisabled());
             identity.setUsername(user.getUserPhone());
-            identity.setPassword(raw.get("password"));
-            user = customerUserService.saveCustomerUser(user, identity, "").toCompletableFuture().get();
+            identity.setPassword(raw.get("identity.password"));
+            CreateIdentityRequest identityRequest = new CreateIdentityRequest(identity);
+            user = customerUserService.saveCustomerUser(user, identityRequest, "").toCompletableFuture().get();
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);

@@ -27,7 +27,7 @@
                 <ul class="nav nav-pills justify-content-center" id="formSteps">
                     <li class="nav-item"><a class="nav-link active" href="#" data-step="1">1. Customer Info</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" data-step="2">2. Accounts</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#" data-step="3">3. Identity</a></li>
+@*                    <li class="nav-item"><a class="nav-link" href="#" data-step="3">3. Identity</a></li>*@
                 </ul>
             </div>
 
@@ -40,17 +40,16 @@
 
                 <div class="card-body">
                         <!-- Step 1 -->
-                    <div class="step" id="step1">
-                        @utils.field_text(userForm("name"), "Full Name", required = true, htmlValidationMessage = "Full Name is required.")
-                        @utils.field_text(userForm("userEmail"), "Your Email", inputType = "email", helpText = Some("Just for communication purposes"))
+                    <div class="step" id="step1" style="margin: 5px;">
+                        @utils.field_text(userForm("name"), "Full Name", colSpan="12", required = true, htmlValidationMessage = "Full Name is required.")
+                        @utils.field_text(userForm("userEmail"), "Your Email", colSpan="12", inputType = "email", helpText = Some("Just for communication purposes"))
 
-                        <div class="row">
-                            @utils.field_text(userForm("userPhone"), "Your Phone Number", colSpan = "4", required = true, htmlValidationMessage = "Phone number is required.", helpText = Some("Will serve as your username also"))
-                            @utils.field_text(userForm("identity.password"), "Password", colSpan = "4", required = true, htmlValidationMessage = "Password is required.", inputType = "password")
-                        </div>
+                        @utils.field_text(userForm("userPhone"), "Your Phone Number", colSpan = "12", required = true, htmlValidationMessage = "Phone number is required.", helpText = Some("Will serve as your username also"))
+                        @utils.field_text(userForm("identity.password"), "Password", colSpan = "12", required = true, htmlValidationMessage = "Password is required.", inputType = "password")
 
-                        @utils.field_toggle_button(field = userForm("disabled"), label = "Disabled", id = "disabledSwitch", colSpan = "6", helpText = Some("Flag user as active or not"))
+                        @utils.field_toggle_button(field = userForm("disabled"), label = "Disabled", id = "disabledSwitch", colSpan = "12", helpText = Some("Flag user as active or not"))
                     </div>
+
 
                         <!-- Step 2 -->
                     <div class="step d-none" id="step2">
@@ -79,9 +78,9 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label">Issuing Institution</label>
-                                        <select name="accounts[@i].issuingInstitution" class="form-select">
+                                        <select name="accounts[@i].issuingInstitution.id" class="form-select">
                                         @for(fi <- institutions.asScala) {
-                                            <option value="@fi.getCode()" @if(acct.getIssuingInstitution()!=null && fi.getCode()==acct.getIssuingInstitution().getCode()){"selected"}>@fi.getName()</option>
+                                            <option value="@fi.getId()" @if(acct.getIssuingInstitution()!=null && fi.getId()==acct.getIssuingInstitution().getId()){"selected"}>@fi.getName()</option>
                                         }
                                         </select>
                                     </div>
@@ -130,10 +129,10 @@
                         </div>
                     </div>
 
-                        <!-- Step 3 -->
-                    <div class="step d-none" id="step3">
-                        <p class="text-muted">Identity form section goes here...</p>
-                    </div>
+@*                        <!-- Step 3 -->*@
+@*                    <div class="step d-none" id="step3">*@
+@*                        <p class="text-muted">Identity form section goes here...</p>*@
+@*                    </div>*@
                 </div>
 
                 <div class="card-footer d-flex justify-content-between">
@@ -230,7 +229,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Issuing Institution</label>
-                            <select name="accounts[${idx}].issuingInstitution" class="form-select">${institutions}</select>
+                            <select name="accounts[${idx}].issuingInstitution.id" class="form-select">${institutions}</select>
                         </div>
                     </div>
 
@@ -252,15 +251,15 @@
                     </div>
 
                     <div class="row g-2 mt-2">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">First Six Digits</label>
                             <input class="form-control" name="accounts[${idx}].card.firstSixDigits">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Last Four Digits</label>
                             <input class="form-control" name="accounts[${idx}].card.lastFourDigits">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label">Length of Digits</label>
                             <input class="form-control" name="accounts[${idx}].card.digitLength">
                         </div>

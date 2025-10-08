@@ -156,38 +156,39 @@ public class EndpointConfigService {
 
         return jdbcWrapper.withTransaction(connection -> {
             try {
-                // Call upsert_endpoint_config
+                // 🔹 Call PostgreSQL function or procedure — auto-detects type
                 return jdbcWrapper.call("upsert_endpoint_config", connection)
-                        .param(endpointConfig.getId() == null ? null : endpointConfig.getId())       // p_id BIGINT
-                        .param(endpointConfig.getDomainOwnerId())                                   // p_domain_owner_id BIGINT
-                        .param(endpointConfig.getDomainOwnerType() == null ? null : endpointConfig.getDomainOwnerType().toString()) // p_domain_owner_type VARCHAR
-                        .param(endpointConfig.getDomainOwnerCode())                                 // p_domain_owner_code VARCHAR
-                        .param(endpointConfig.getDescription())                                     // p_description TEXT
-                        .param(toJsonb(endpointConfig.getNetwork()))                                // p_network_config JSONB
-                        .param(toJsonb(endpointConfig.getSecurity()))                               // p_security_config JSONB
-                        .param(toJsonb(endpointConfig.getEndpoints()))                              // p_endpoints JSONB
-                        .param(toJsonb(endpointConfig.getResilience()))                             // p_resilience_config JSONB
-                        .param(toJsonb(endpointConfig.getMetadata()))                               // p_metadata JSONB
-                        .execute(rs -> {
+                        .param(endpointConfig.getId())                                   // p_id BIGINT
+                        .param(endpointConfig.getDomainOwnerId())                        // p_domain_owner_id BIGINT
+                        .param(endpointConfig.getDomainOwnerType() == null ? null :
+                                endpointConfig.getDomainOwnerType().toString())           // p_domain_owner_type VARCHAR
+                        .param(endpointConfig.getDomainOwnerCode())                      // p_domain_owner_code VARCHAR
+                        .param(endpointConfig.getDescription())                          // p_description TEXT
+                        .param(toJsonb(endpointConfig.getNetwork()))                     // p_network_config JSONB
+                        .param(toJsonb(endpointConfig.getSecurity()))                    // p_security_config JSONB
+                        .param(toJsonb(endpointConfig.getEndpoints()))                   // p_endpoints JSONB
+                        .param(toJsonb(endpointConfig.getResilience()))                  // p_resilience_config JSONB
+                        .param(toJsonb(endpointConfig.getMetadata()))                    // p_metadata JSONB
+                        .query(rs -> {  // ✅ use query(), not execute()
                             try {
                                 if (rs.next()) {
-                                    // Map SQL result back into EndpointConfig domain
                                     return ResultSetToBeanMapper.mapResultSetToEndpointConfig(rs);
                                 }
-                                // If no result, return input object as fallback
+                                // If the DB function returned no rows, fallback to the input object
                                 return endpointConfig;
                             } catch (SQLException e) {
-                                throw new AppDataAccessException("EndpointConfig upsert failed", e);
+                                throw new AppDataAccessException("Failed mapping EndpointConfig result", e);
                             }
                         });
 
-            } catch (SQLException e) {
-                throw new AppDataAccessException("Transaction failed while processing a db action", e);
-            } catch (JsonProcessingException ex) {
-                throw new AppDataAccessException("Transaction failed while wrapping value to JSON string", ex);
+            } catch (JsonProcessingException e) {
+                throw new AppDataAccessException("Failed serializing EndpointConfig fields to JSON", e);
+            } catch (Exception e) {
+                throw new AppDataAccessException("Transaction failed while processing EndpointConfig save", e);
             }
         });
     }
+
 
 
 

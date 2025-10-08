@@ -3,11 +3,11 @@ package scalas.modules
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 import scalas.services.FlywayInitializer
-import security.{Secured, SecurityConfig, UserContext}
-import services.{CustomerUserService, EndpointConfigService, FinancialInstitutionService, S3Service}
+import security.{Secured, SecurityConfig, SessionTokenManager, UserContext}
+import services.{AuthService, CustomerUserService, EndpointConfigService, FinancialInstitutionService, S3Service}
 import services.db.JdbcWrapper
 import org.pac4j.core.config.Config
-import utilities.components.{DomainHandlerRegistry, FinancialInstitutionHandler, IdentityServiceSettings}
+import utilities.components.{DomainHandlerRegistry, FinancialInstitutionHandler, IdentityServiceSettings, JacksonConfig}
 import utilities.rest.{RestClientConfig, RestClientService}
 
 import javax.inject.Provider
@@ -18,11 +18,14 @@ class ConfigModule extends Module {
     Seq(
       bind[FlywayInitializer].toSelf.eagerly(),
       bind[JdbcWrapper].toSelf.eagerly(),
+      bind[JacksonConfig].toSelf.eagerly(),
       bind[S3Service].toSelf.eagerly(),
       bind[IdentityServiceSettings].toSelf.eagerly(),
       bind[FinancialInstitutionService].toSelf,
       bind[EndpointConfigService].toSelf,
       bind[CustomerUserService].toSelf,
+      bind[AuthService].toSelf,
+      bind[SessionTokenManager].toSelf,
 
       //util components
 
