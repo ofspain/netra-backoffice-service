@@ -31,6 +31,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static security.SessionTokenManager.ACCESS_TOKEN_KEY;
+
 @Singleton
 public class SecurityConfig {
 
@@ -103,20 +105,39 @@ public class SecurityConfig {
 
         // Custom token extractor for multiple headers
         headerClient.setCredentialsExtractor(ctx -> {
-            // Try Authorization header first
-            String authHeader = ctx.webContext().getRequestHeader(Constants.REQUEST_AUTH_BEARER_KEY).orElse("");
-            if (authHeader.startsWith("Bearer ")) {
-                return Optional.of(new TokenCredentials(authHeader.substring(7)));
-            }else{
-                //todo: throw relevant exception here
+
+
+            // First check session for token
+            Optional<String> sessionToken = ctx.sessionStore()
+                    .get(ctx.webContext(), ACCESS_TOKEN_KEY)
+                    .map(Object::toString);
+
+//            Optional<String> sessionToken = ctx.sessionStore()
+//                    .get(ctx.webContext(), ACCESS_TOKEN_KEY)
+//                    .map(Object::toString);
+//            Optional<String> sessionToken = ctx.sessionStore()
+//                    .get(ctx.webContext(), ACCESS_TOKEN_KEY)
+//                    .map(Object::toString);
+
+            if (sessionToken.isPresent()) {
+
+                return Optional.of(new TokenCredentials(sessionToken.get()));
             }
 
-            // Fallback to X-Authorization
+            // Check X-Authentication-Domain First
             String customHeader = ctx.webContext().getRequestHeader(Constants.REQUEST_AUTH_DOMAIN_X_KEY).orElse("");
             if (BasicUtil.validString(customHeader)) {
                 //todo: do shennanigans domain validation here eg: domain in header == domain in body
             }else{
                 //todo: throw relevant exception here too
+            }
+
+            // Fallback to Authorization header
+            String authHeader = ctx.webContext().getRequestHeader(Constants.REQUEST_AUTH_BEARER_KEY).orElse("");
+            if (authHeader.startsWith("Bearer ")) {
+                return Optional.of(new TokenCredentials(authHeader.substring(7)));
+            }else{
+                //todo: throw relevant exception here
             }
 
             return Optional.empty();
@@ -129,10 +150,13 @@ public class SecurityConfig {
         // But Play Framework typically uses session stores
         config.setSessionStoreFactory(parameters -> new org.pac4j.play.store.PlayCookieSessionStore());
 
+
+
         // Role-based authorizers
-        config.addAuthorizer("admin", new RoleAuthorizer("ADMIN"));
-        config.addAuthorizer("user", new RoleAuthorizer("USER"));
-        config.addAuthorizer("anyRole", new AnyRoleAuthorizer());
+
+        config.addAuthorizer("requireRoleAuthorizer", new RoleAuthorizer());
+        config.addAuthorizer("anyRoleAuthorizer", new AnyRoleAuthorizer());
+
     }
 
     private void validateCustomClaims(UserProfile profile) {
@@ -163,34 +187,6 @@ public class SecurityConfig {
 
     public Config getConfig() {
         return config;
-    }
-
-    // Role-based authorizer for specific role
-    public static class RoleAuthorizer implements Authorizer {
-        private final String requiredRole;
-
-        public RoleAuthorizer(String requiredRole) {
-            this.requiredRole = requiredRole;
-        }
-
-        @Override
-        public boolean isAuthorized(WebContext context, SessionStore sessionStore, List<UserProfile> profiles) {
-            if (CommonHelper.isEmpty(profiles)) {
-                return false;
-            }
-
-            boolean authorized = profiles.stream()
-                    .anyMatch(profile -> profile.getRoles() != null &&
-                            profile.getRoles().contains(requiredRole));
-
-            if (!authorized) {
-                LOGGER.warn("Unauthorized access attempt to {} resource by {}",
-                        requiredRole,
-                        profiles.stream().map(UserProfile::getId).collect(Collectors.joining(",")));
-            }
-
-            return authorized;
-        }
     }
 
     // Authorizer that requires any role (user must be authenticated with at least one role)

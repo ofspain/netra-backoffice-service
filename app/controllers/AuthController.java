@@ -59,7 +59,9 @@ public class AuthController extends Controller {
                         outcome.loginResult().tokenType(),
                         outcome.loginResult().expiresIn(),
                         outcome.loginResult().lastLogin(),
-                        outcome.loginResult().refreshToken()
+                        outcome.loginResult().refreshToken(),
+                        outcome.loginResult().domainType(),
+                        outcome.loginResult().domainCode()
                 ),
                 outcome.loginResult().username()
         );

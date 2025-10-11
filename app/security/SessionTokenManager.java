@@ -1,5 +1,6 @@
 package security;
 
+import com.netra.commons.util.Constants;
 import play.mvc.Http;
 import services.AuthService;
 import utilities.dto.AuthResponse;
@@ -15,10 +16,12 @@ import java.util.Optional;
 @Singleton
 public class SessionTokenManager {
 
-    private static final String ACCESS_TOKEN_KEY = "ACCESS_TOKEN";
+    public static final String ACCESS_TOKEN_KEY = "ACCESS_TOKEN";
     private static final String REFRESH_TOKEN_KEY = "REFRESH_TOKEN";
     private static final String TOKEN_EXPIRY_KEY = "ACCESS_TOKEN_EXPIRY";
     private static final String USERNAME_KEY = "USERNAME";
+
+    public static final String DOMAIN_CODE_KEY = "x-domain-code";
 
     private final AuthService authService; // your existing login/refresh service
 
@@ -36,7 +39,9 @@ public class SessionTokenManager {
                 .adding(ACCESS_TOKEN_KEY, authResponse.getAccessToken())
                 .adding(REFRESH_TOKEN_KEY, authResponse.getRefreshToken())
                 .adding(TOKEN_EXPIRY_KEY, expiryTime.toString())
-                .adding(USERNAME_KEY, username);
+                .adding(USERNAME_KEY, username)
+                .adding(DOMAIN_CODE_KEY, authResponse.getDomainCode())
+                .adding(Constants.REQUEST_AUTH_DOMAIN_X_KEY, authResponse.getDomainType().name());
     }
 
     /**

@@ -99,7 +99,7 @@ public class AuthService {
                 usernameFromToken,
                 issuer,
                 domainCode,
-                domainType,
+                DomainType.valueOf(domainType),
                 identityUuid,
                 roles,
                 lastLogin,

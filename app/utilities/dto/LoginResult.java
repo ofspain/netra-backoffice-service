@@ -1,4 +1,6 @@
 package utilities.dto;
+import com.netra.commons.enums.DomainType;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -10,7 +12,7 @@ public record LoginResult(
         String username,
         String issuer,
         String domainCode,
-        String domainType,
+        DomainType domainType,
         String identityUuid,
         List<String> roles,
         LocalDateTime lastLogin,
