@@ -1,5 +1,6 @@
 package services;
 
+import com.netra.commons.util.FileUtils;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -11,7 +12,6 @@ import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
-import utilities.FileUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -1,8 +1,9 @@
-@(field: Field, label: String, colSpan: String = "6", options: scala.collection.immutable.Map[String, String], attributes: scala.collection.immutable.Map[String, String] = scala.collection.immutable.Map(), helpText: Option[String] = None, extraCss: String="")
+@(field: Field, label: String, colSpan: String = "6", options: scala.collection.immutable.Map[String, String], attributes: scala.collection.immutable.Map[String, String] = scala.collection.immutable.Map(), helpText: Option[String] = None, extraCss: String="", required: Boolean=false)
 
 <div class="col-md-@colSpan @extraCss">
     <label class="form-label">@Html(label)</label>
-    <select name="@field.name" class="form-select @if(field.hasErrors) {is-invalid}"
+    <select name="@field.name" class="form-select
+            @if(field.hasErrors) {is-invalid}"  @if(required){ required }
             @for((key,value) <- attributes){ @key = "@value" } >
             @for((value, display) <- options) {
                 <option value="@value" @if(field.value.contains(value)) {selected}>@display</option>

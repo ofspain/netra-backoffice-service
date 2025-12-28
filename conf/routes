@@ -49,7 +49,6 @@ POST    /admin/customer-users/delete/:hashedId     controllers.admin.CustomerUse
 POST    /admin/customer-users/save                 controllers.admin.CustomerUserController.saveNewUser(request: Request)
 POST    /admin/customer-users/update/:hashedId     controllers.admin.CustomerUserController.updateOldUser(hashedId: String, request: Request)
 
-
 GET    /customer-users/:hashedId     controllers.customer.user.CustomerUserDashboard.index(hashedId: String, request: Request)
 
 # Map static resources from the /public folder to the /assets URL path

@@ -1,10 +1,10 @@
 @import com.netra.commons.models.FinancialInstitution
 @import controllers.admin.routes
-@import utilities.FileUtils
 @import views.html.utils
 @import scala.collection.immutable.Map
 @import com.netra.commons.util.BasicUtil.encodeUrlBoundId
 
+@import com.netra.commons.util.FileUtils
 @(fiForm: Form[FinancialInstitution], fi: FinancialInstitution)(implicit req: play.mvc.Http.Request)
 
 @isEdit = @{

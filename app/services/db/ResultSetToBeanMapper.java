@@ -4,23 +4,21 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.graph.Network;
 import com.netra.commons.database.EnhancedBeanPropertyRowMapper;
 import com.netra.commons.enums.DomainType;
+import com.netra.commons.enums.TransactionAction;
+import com.netra.commons.enums.TransactionInstrument;
 import com.netra.commons.exceptions.AppDataAccessException;
-import com.netra.commons.models.AccountDetail;
-import com.netra.commons.models.CustomerUser;
-import com.netra.commons.models.Identity;
+import com.netra.commons.models.*;
 import com.netra.commons.models.endpoint.*;
-import com.netra.commons.models.FinancialInstitution;
 import lombok.experimental.UtilityClass;
 import utilities.MapperUtil;
 import utilities.PaginatedResult;
 
+import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -305,7 +303,6 @@ public class ResultSetToBeanMapper {
             throw new AppDataAccessException("Error mapping CustomerUser", e);
         }
     }
-
 
     // ============================================================
     // Helper Methods

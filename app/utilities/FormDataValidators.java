@@ -1,8 +1,8 @@
 package utilities;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.netra.commons.enums.DomainType;
 import com.netra.commons.models.CustomerUser;
+import com.netra.commons.models.TransactionType;
 import com.netra.commons.models.endpoint.*;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.util.BasicUtil;
@@ -10,9 +10,7 @@ import play.data.Form;
 import services.CustomerUserService;
 import services.FinancialInstitutionService;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -317,6 +315,5 @@ public class FormDataValidators {
         //todo: do app level validation here
         return customerUserForm;
     }
-
 
 }

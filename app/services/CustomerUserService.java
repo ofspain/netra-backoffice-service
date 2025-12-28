@@ -11,6 +11,7 @@ import play.libs.Json;
 import services.db.JdbcWrapper;
 import services.db.ResultSetToBeanMapper;
 import utilities.PaginatedResult;
+import utilities.PaginationParams;
 import utilities.components.IdentityServiceSettings;
 import utilities.rest.RestClientService;
 
@@ -38,16 +39,15 @@ public class CustomerUserService {
     }
 
 
-    public CompletionStage<PaginatedResult<CustomerUser>> findAll(
-            int limit, int offset, String sortBy, String sortDir) {
+    public CompletionStage<PaginatedResult<CustomerUser>> findAll(PaginationParams paginationParams) {
         System.out.println("finding all user....");
 
         return jdbcClient.sql("SELECT * FROM find_all_customer_users(?, ?, ?, ?)")
-                .param(limit)
-                .param(offset)
-                .param(sortBy)
-                .param(sortDir)
-                .queryAsync(rs -> ResultSetToBeanMapper.mapToCustomerUser(rs, limit, offset));
+                .param(paginationParams.getLimit())//limit
+                .param(paginationParams.getPage())//offset/page
+                .param(paginationParams.getSortBy())//sortby
+                .param(paginationParams.getDirection())//sortDir
+                .queryAsync(rs -> ResultSetToBeanMapper.mapToCustomerUser(rs, paginationParams.getLimit(), paginationParams.getPage()));
     }
 
     public CompletionStage<CustomerUser> saveCustomerUser(CustomerUser user, CreateIdentityRequest identityRequest, String prefix) {

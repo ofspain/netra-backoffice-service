@@ -1,6 +1,6 @@
 package controllers.admin;
 
-import com.netra.commons.enums.DomainType;
+import com.google.inject.Inject;
 import com.netra.commons.models.CustomerUser;
 import com.netra.commons.models.FinancialInstitution;
 import com.netra.commons.models.Identity;
@@ -17,9 +17,8 @@ import services.CustomerUserService;
 import services.FinancialInstitutionService;
 import utilities.FormDataValidators;
 import utilities.PaginatedResult;
+import utilities.PaginationParams;
 
-import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,10 +70,12 @@ public class CustomerUserController extends Controller {
         String sortBy = request.queryString("sort").orElse("created_at");
         String direction = request.queryString("sort_direction").orElse("DESC");
 
+        PaginationParams paginationParams = new PaginationParams(page, limit, sortBy, direction);
+
 
         try {
             PaginatedResult<CustomerUser> paginatedResult = customerUserService
-                    .findAll(limit, page, sortBy, direction).toCompletableFuture().get();
+                    .findAll(paginationParams).toCompletableFuture().get();
 
             System.out.println("ITEMS "+paginatedResult.getItems().size());
 
